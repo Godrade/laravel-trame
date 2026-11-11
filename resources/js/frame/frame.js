@@ -337,7 +337,8 @@ function editedValue() {
 
     return editing.rich
         ? editing.el.innerHTML.trim()
-        : editing.el.innerText.replace(/\s+/g, ' ').trim();
+        // textContent, not innerText: innerText applies CSS text-transform (uppercase labels).
+        : editing.el.textContent.replace(/\s+/g, ' ').trim();
 }
 
 document.addEventListener(
