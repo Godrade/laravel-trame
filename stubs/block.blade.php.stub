@@ -1,0 +1,4 @@
+{{-- Variables: resolved fields ($title, $color), with() values ($textColor), $editing, $locale --}}
+<div class="{{ $textColor['class'] }}" @if($textColor['style']) style="{{ $textColor['style'] }}" @endif>
+    {{ $title }}
+</div>

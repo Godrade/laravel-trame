@@ -1,0 +1,24 @@
+<?php
+
+return [
+    'text' => 'Texte',
+    'level' => 'Niveau',
+    'size' => 'Taille',
+    'align' => 'Alignement',
+    'color' => 'Couleur',
+    'content' => 'Contenu',
+    'image' => 'Image',
+    'alt' => 'Texte alternatif',
+    'rounded' => 'Coins arrondis',
+    'label' => 'Libellé',
+    'url' => 'Lien',
+    'new_tab' => 'Ouvrir dans un nouvel onglet',
+    'variant' => 'Style',
+    'divider' => 'Ligne de séparation',
+    'bg' => 'Fond',
+    'padding' => 'Marge verticale',
+    'container' => 'Largeur',
+    'anchor' => 'Ancre (id)',
+    'gap' => 'Espacement des colonnes',
+    'valign' => 'Alignement vertical',
+];

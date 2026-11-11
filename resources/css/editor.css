@@ -1,0 +1,43 @@
+/* Editor UI (standalone page). Built into dist/editor.css. */
+@import "tailwindcss" theme(static);
+
+@source "../views/editor";
+@source "../js/editor";
+
+[x-cloak] { display: none !important; }
+
+@utility tr-btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40;
+}
+
+@layer components {
+    .tr-input {
+        @apply w-full rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-sm text-zinc-900 shadow-xs placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none;
+    }
+
+    .tr-btn-primary { @apply tr-btn bg-indigo-600 text-white hover:bg-indigo-500; }
+    .tr-btn-dark { @apply tr-btn bg-zinc-900 text-white hover:bg-zinc-700; }
+    .tr-btn-ghost { @apply tr-btn text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900; }
+    .tr-btn-outline { @apply tr-btn border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50; }
+
+    .tr-icon-btn {
+        @apply inline-flex size-8 items-center justify-center rounded-md text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-30 disabled:hover:bg-transparent;
+    }
+
+    .tr-seg { @apply flex rounded-md bg-zinc-100 p-0.5; }
+    .tr-seg > button { @apply flex-1 rounded px-2 py-1 text-xs font-medium text-zinc-600 transition hover:text-zinc-900; }
+    .tr-seg > button[aria-pressed="true"] { @apply bg-white text-zinc-900 shadow-sm; }
+
+    .tr-label { @apply text-xs font-medium text-zinc-600; }
+    .tr-heading { @apply text-[11px] font-semibold tracking-wide text-zinc-400 uppercase; }
+
+    .tr-prose { @apply min-h-24 px-2.5 py-2 text-sm leading-relaxed text-zinc-800 focus:outline-none; }
+    .tr-prose p { @apply my-1.5; }
+    .tr-prose h2 { @apply mt-3 mb-1 text-base font-semibold; }
+    .tr-prose h3, .tr-prose h4 { @apply mt-2 mb-1 text-sm font-semibold; }
+    .tr-prose ul { @apply my-1.5 list-disc ps-5; }
+    .tr-prose ol { @apply my-1.5 list-decimal ps-5; }
+    .tr-prose blockquote { @apply my-2 border-s-2 border-zinc-300 ps-3 text-zinc-600 italic; }
+    .tr-prose a { @apply text-indigo-600 underline; }
+    .tr-prose code { @apply rounded bg-zinc-100 px-1 font-mono text-xs; }
+}

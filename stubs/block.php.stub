@@ -1,0 +1,45 @@
+<?php
+
+namespace {{ namespace }};
+
+use Godrade\Trame\Blocks\Block;
+use Godrade\Trame\Fields\Field;
+use Godrade\Trame\Support\Tokens;
+
+final class {{ class }} extends Block
+{
+    public static string $type = '{{ type }}';
+
+    public static string $category = 'content';
+
+    /**
+     * Increment when the schema changes in a way that requires converting
+     * stored data, then implement migrate().
+     */
+    public static int $version = 1;
+
+    public static function label(): string
+    {
+        return '{{ label }}';
+    }
+
+    public function schema(): array
+    {
+        return [
+            Field::text('title')->translatable()->required(),
+            Field::color('color')->default('slate-900'),
+        ];
+    }
+
+    public function with(array $data): array
+    {
+        return [
+            'textColor' => Tokens::color($data['color'], 'text'),
+        ];
+    }
+
+    public function view(): string
+    {
+        return '{{ view }}';
+    }
+}
