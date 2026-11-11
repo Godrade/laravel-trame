@@ -216,3 +216,61 @@ test('toggling visibility keeps breakpoint order and drops empty settings on blo
     D.toggleHidden(section, 'md');
     assert.deepEqual(section.settings, { padding: 'md' });
 });
+
+const itemFields = [
+    { name: 'image', type: 'image', default: null },
+    { name: 'caption', type: 'text', translatable: true },
+    { name: 'featured', type: 'toggle' },
+];
+
+test('fieldDefaults gives an empty list for repeaters', () => {
+    assert.deepEqual(D.fieldDefaults([{ name: 'images', type: 'repeater', fields: itemFields }], 'fr'), { images: [] });
+});
+
+test('makeItem builds an id and sub-field defaults', () => {
+    const item = D.makeItem(itemFields, 'fr');
+
+    assert.match(item.id, /^itm_[a-z0-9]{10}$/);
+    assert.deepEqual({ ...item, id: null }, { id: null, image: null, caption: {}, featured: false });
+});
+
+test('addItem appends, and stops at max', () => {
+    const list = [];
+    const first = D.addItem(list, itemFields, 'fr', 2);
+    D.addItem(list, itemFields, 'fr', 2);
+
+    assert.equal(list.length, 2);
+    assert.equal(list[0], first);
+    assert.equal(D.addItem(list, itemFields, 'fr', 2), null);
+    assert.equal(list.length, 2);
+    assert.notEqual(list[0].id, list[1].id);
+});
+
+test('removeItem removes by id', () => {
+    const list = [{ id: 'a' }, { id: 'b' }];
+
+    assert.equal(D.removeItem(list, 'a'), true);
+    assert.deepEqual(list, [{ id: 'b' }]);
+    assert.equal(D.removeItem(list, 'zzz'), false);
+});
+
+test('moveItem moves by delta and clamps at the bounds', () => {
+    const list = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+
+    assert.equal(D.moveItem(list, 'a', 1), true);
+    assert.deepEqual(list.map((i) => i.id), ['b', 'a', 'c']);
+    assert.equal(D.moveItem(list, 'a', 5), true);
+    assert.deepEqual(list.map((i) => i.id), ['b', 'c', 'a']);
+    assert.equal(D.moveItem(list, 'a', 1), false);
+    assert.equal(D.moveItem(list, 'b', -1), false);
+    assert.equal(D.moveItem(list, 'nope', 1), false);
+});
+
+test('responsive fields accept a per-breakpoint default', () => {
+    const columns = { name: 'columns', type: 'select', responsive: true, default: { base: '2', md: '3' } };
+
+    assert.deepEqual(D.fieldDefaults([columns], 'fr'), { columns: { base: '2', md: '3' } });
+    assert.equal(D.readResponsive({}, columns, 'base'), '2');
+    assert.equal(D.readResponsive({}, columns, 'lg'), '3');
+    assert.equal(D.readResponsive({ columns: { base: '1' } }, columns, 'lg'), '1', 'a stored value wins over the default');
+});

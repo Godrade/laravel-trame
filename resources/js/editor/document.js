@@ -40,16 +40,61 @@ export function fieldDefaults(fields, fallback) {
     const data = {};
 
     for (const field of fields ?? []) {
-        if (field.translatable) {
+        if (field.type === 'repeater') {
+            data[field.name] = [];
+        } else if (field.translatable) {
             data[field.name] = field.default != null ? { [fallback]: field.default } : {};
         } else if (field.responsive) {
-            data[field.name] = field.default != null ? { base: field.default } : null;
+            data[field.name] = field.default != null ? responsiveObject(field.default) : null;
         } else {
             data[field.name] = field.default ?? (field.type === 'toggle' ? false : null);
         }
     }
 
     return data;
+}
+
+/** A new repeater item: its own id plus the sub-field defaults. */
+export function makeItem(fields, fallback) {
+    return { id: uid('itm'), ...fieldDefaults(fields, fallback) };
+}
+
+/** Append a new item to a repeater list; returns it, or null when `max` is reached. */
+export function addItem(list, fields, fallback, max = Infinity) {
+    if (list.length >= max) {
+        return null;
+    }
+
+    const item = makeItem(fields, fallback);
+    list.push(item);
+
+    return item;
+}
+
+export function removeItem(list, id) {
+    const index = list.findIndex((item) => item.id === id);
+
+    if (index === -1) {
+        return false;
+    }
+
+    list.splice(index, 1);
+
+    return true;
+}
+
+/** Move an item by `delta` positions, clamped to the list bounds. */
+export function moveItem(list, id, delta) {
+    const from = list.findIndex((item) => item.id === id);
+    const to = Math.max(0, Math.min(list.length - 1, from + delta));
+
+    if (from === -1 || to === from) {
+        return false;
+    }
+
+    list.splice(to, 0, ...list.splice(from, 1));
+
+    return true;
 }
 
 export function spanFor(md) {
@@ -382,7 +427,7 @@ export function writeField(container, field, locale, value) {
 /** Responsive value as an object; a legacy scalar is the base value. */
 function responsiveObject(value) {
     if (isObject(value)) {
-        return value;
+        return { ...value };
     }
 
     return value === null || value === undefined ? {} : { base: value };
@@ -393,13 +438,16 @@ export function readResponsive(container, field, breakpoint) {
     const value = responsiveObject(isObject(container) ? container[field.name] : undefined);
     const chain = BREAKPOINTS.slice(0, BREAKPOINTS.indexOf(breakpoint) + 1).reverse();
 
-    for (const key of chain) {
-        if (value[key] !== undefined && value[key] !== null) {
-            return value[key];
+    // The stored value first, then the field default (a scalar base value or a per-breakpoint object).
+    for (const source of [value, responsiveObject(field.default)]) {
+        for (const key of chain) {
+            if (source[key] !== undefined && source[key] !== null) {
+                return source[key];
+            }
         }
     }
 
-    return field.default ?? null;
+    return null;
 }
 
 export function isResponsiveInherited(container, field, breakpoint) {

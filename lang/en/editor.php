@@ -67,6 +67,8 @@ return [
     'missing_template' => 'Template not found',
     'confirm_delete_template' => 'Delete this template? Pages using it as global will stop showing it.',
 
+    'no_items' => 'No items yet.',
+    'add_item' => 'Add an item',
     'choose_image' => 'Choose an image',
     'change_image' => 'Change',
     'remove' => 'Remove',

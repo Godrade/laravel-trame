@@ -38,7 +38,7 @@ final class Schema
 
         foreach ($fields as $field) {
             $out[$field->name] = array_key_exists($field->name, $data)
-                ? $field->normalize($data[$field->name], $localizer->locales(), $sanitizer)
+                ? $field->normalize($data[$field->name], $localizer->locales(), $sanitizer, $localizer->fallback())
                 : $field->defaultFor($localizer->fallback());
         }
 
@@ -60,6 +60,12 @@ final class Schema
         foreach ($fields as $field) {
             $value = $data[$field->name] ?? null;
 
+            if ($field->type === 'repeater') {
+                $out[$field->name] = self::resolveItems($field, $value, $locale, $localizer);
+
+                continue;
+            }
+
             if (! $field->isTranslatable()) {
                 $out[$field->name] = $value;
 
@@ -73,6 +79,31 @@ final class Schema
             }
 
             $out[$field->name] = $resolved;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Resolve each repeater item for a locale. In "hide" mode an item missing a
+     * required translation is dropped (the block stays).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private static function resolveItems(Field $field, mixed $items, string $locale, Localizer $localizer): array
+    {
+        $out = [];
+
+        foreach (is_array($items) ? $items : [] as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $resolved = self::resolve($field->childFields(), $item, $locale, $localizer);
+
+            if ($resolved !== null) {
+                $out[] = ['id' => $item['id'] ?? null, ...$resolved];
+            }
         }
 
         return $out;

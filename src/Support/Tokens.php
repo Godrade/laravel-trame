@@ -65,7 +65,14 @@ final class Tokens
      */
     public const HIDE = ['base' => 'max-md:hidden', 'md' => 'md:max-lg:hidden', 'lg' => 'lg:hidden'];
 
-    public const HEADING_SIZE = ['xl' => 'text-xl', '2xl' => 'text-2xl', '3xl' => 'text-3xl', '4xl' => 'text-4xl', '5xl' => 'text-5xl'];
+    /** Large sizes tighten tracking and leading; small ones keep the defaults. */
+    public const HEADING_SIZE = [
+        'xl' => 'text-xl',
+        '2xl' => 'text-2xl',
+        '3xl' => 'text-3xl tracking-tight',
+        '4xl' => 'text-4xl leading-tight tracking-tight',
+        '5xl' => 'text-5xl leading-none tracking-tight',
+    ];
 
     public const SECTION_PADDING = ['none' => 'py-0', 'sm' => 'py-8', 'md' => 'py-12', 'lg' => 'py-20', 'xl' => 'py-32'];
 
@@ -85,7 +92,18 @@ final class Tokens
 
     public const VALIGN = ['start' => 'justify-start', 'center' => 'justify-center', 'end' => 'justify-end'];
 
-    public const ROUNDED = ['none' => 'rounded-none', 'md' => 'rounded-md', 'lg' => 'rounded-lg', 'full' => 'rounded-full'];
+    /** "md" follows the host theme radius (--trame-radius, see resources/css/trame.css). */
+    public const ROUNDED = ['none' => 'rounded-none', 'md' => 'rounded-(--trame-radius)', 'lg' => 'rounded-2xl', 'full' => 'rounded-full'];
+
+    /**
+     * Rich text from the editor (paragraphs, h2, h3, lists, blockquotes, links).
+     * Tailwind's preflight resets lists and headings: this restores them without
+     * the typography plugin, in the host's font and colour.
+     */
+    public const PROSE = 'text-pretty leading-7 [&>*+*]:mt-4 [&_h2]:mt-8 [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:leading-tight [&_h3]:mt-6 [&_h3]:text-xl [&_h3]:font-semibold [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:ps-6 [&_ol]:ps-6 [&_li+li]:mt-1 [&_li::marker]:opacity-60 [&_a]:underline [&_a]:decoration-current/40 [&_a]:underline-offset-4 [&_a:hover]:decoration-current [&_strong]:font-semibold [&_blockquote]:border-s-2 [&_blockquote]:border-current/20 [&_blockquote]:ps-4';
+
+    /** Hairline in the current text colour: works on light and dark sections. */
+    public const RULE = 'border-current/20';
 
     public const SPACER = ['sm' => 'h-4', 'md' => 'h-8', 'lg' => 'h-16', 'xl' => 'h-24'];
 

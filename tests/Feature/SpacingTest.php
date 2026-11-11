@@ -25,12 +25,12 @@ function spacingErrors(array $document): array
     return [];
 }
 
-it('keeps the previous look by default', function () {
+it('uses the default spacing', function () {
     $html = (string) Trame::render(spacingDoc(), 'fr');
 
     expect($html)
         ->toMatch('/<section\s+class="relative w-full py-12"/')
-        ->toContain('class="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col gap-0"')
+        ->toContain('class="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col gap-8"')
         ->toContain('class="flex min-w-0 flex-col gap-4 col-span-12')
         ->toMatch('/<div class="flex min-w-0[^"]*"\s*><h2/');
 });

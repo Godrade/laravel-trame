@@ -27,6 +27,7 @@ final class ImageBlock extends Block
         return [
             Field::image('image'),
             Field::text('alt')->translatable(),
+            Field::text('caption')->translatable()->max(300),
             Field::select('rounded')->options(Tokens::keys(Tokens::ROUNDED))->default('none'),
         ];
     }

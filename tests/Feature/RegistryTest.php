@@ -6,7 +6,7 @@ use Godrade\Trame\Facades\Trame;
 
 it('registers core blocks and discovers application blocks', function () {
     expect(array_keys(app(BlockRegistry::class)->all()))
-        ->toContain('heading', 'text', 'image', 'button', 'spacer', 'quote');
+        ->toContain('heading', 'text', 'image', 'button', 'spacer', 'legacy-quote');
 });
 
 it('exposes definitions for the editor', function () {

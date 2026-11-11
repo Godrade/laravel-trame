@@ -15,7 +15,11 @@ First release.
 - Per-screen settings: hide any node per breakpoint, responsive select fields (alignment of the heading,
   text and button blocks), spacing between rows, columns and blocks, block margins, section padding.
 - Multilingual: shared layout, `->translatable()` fields, fallback or hide mode.
-- Core blocks: heading, text, button, image, spacer.
+- Core blocks: heading, text, quote, callout, question & answer, button, image, gallery, spacer. Neutral
+  design that inherits the host font and text colour; theme hooks `--trame-accent`, `--trame-on-accent`,
+  `--trame-radius`; rich text lists, links and subheadings styled without the typography plugin.
+- Repeater field (`Field::repeater()->fields([...])`) with add, reorder and remove in the editor.
+- Responsive select defaults per breakpoint (`->default(['base' => '2', 'md' => '3'])`).
 - Rich text sanitized with `symfony/html-sanitizer`; URL, colour and locale validation.
 - Published render cache per content, published document and locale (`trame:clear`).
 

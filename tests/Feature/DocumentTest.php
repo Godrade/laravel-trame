@@ -62,7 +62,7 @@ it('normalizes ids, defaults and spans', function () {
     $block = $column['blocks'][0];
 
     expect($section['id'])->toStartWith('sec_')
-        ->and($section['settings'])->toMatchArray(['padding' => ['base' => 'md'], 'rows_gap' => ['base' => 'none'], 'container' => 'boxed'])
+        ->and($section['settings'])->toMatchArray(['padding' => ['base' => 'md'], 'rows_gap' => ['base' => 'md'], 'container' => 'boxed'])
         ->and($column['span'])->toBe(['base' => 12, 'md' => 6])
         ->and($block)->toMatchArray(['type' => 'heading', 'v' => 1])
         ->and($block['data'])->toMatchArray(['text' => ['fr' => 'Salut'], 'level' => 2, 'align' => ['base' => 'start']]);
@@ -70,7 +70,7 @@ it('normalizes ids, defaults and spans', function () {
 
 it('migrates blocks stored with an older version', function () {
     $doc = app(DocumentNormalizer::class)->normalize(trameDoc([
-        ['type' => 'quote', 'v' => 1, 'data' => ['text' => ['fr' => 'Citation']]],
+        ['type' => 'legacy-quote', 'v' => 1, 'data' => ['text' => ['fr' => 'Citation']]],
     ]));
 
     expect($doc['sections'][0]['rows'][0]['columns'][0]['blocks'][0])

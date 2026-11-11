@@ -8,7 +8,7 @@ use Godrade\Trame\Fields\Field;
 /** Discovered automatically; version 2 renamed "text" to "quote". */
 final class QuoteBlock extends Block
 {
-    public static string $type = 'quote';
+    public static string $type = 'legacy-quote';
 
     public static int $version = 2;
 

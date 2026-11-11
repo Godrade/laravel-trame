@@ -25,7 +25,7 @@ final class TextBlock extends Block
         return [
             Field::richText('content')->translatable()->required(),
             Field::select('align')->options(Tokens::keys(Tokens::ALIGN))->default('start')->responsive(),
-            Field::color('color')->default('slate-700'),
+            Field::color('color'),
         ];
     }
 
@@ -37,7 +37,7 @@ final class TextBlock extends Block
             // Sanitized on save; sanitized again here in case data was written outside the API.
             'html' => $this->sanitizer->sanitize((string) $data['content']),
             'classes' => Tokens::join(
-                'space-y-4 leading-relaxed',
+                Tokens::PROSE,
                 Tokens::responsive(Tokens::ALIGN_RESPONSIVE, $data['align'], 'start'),
                 $color['class'],
             ),

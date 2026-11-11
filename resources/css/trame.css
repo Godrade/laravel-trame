@@ -21,3 +21,16 @@
 
 /* Custom hex colours go through CSS variables */
 @source inline("text-(--trame-text) bg-(--trame-bg) border-(--trame-border)");
+
+/*
+ * Theme hooks used by core blocks. Override them in your own stylesheet:
+ *   :root { --trame-accent: var(--color-emerald-700); --trame-radius: 0; }
+ * Declared in the base layer so any unlayered rule of yours wins.
+ */
+@layer base {
+    :root {
+        --trame-accent: #000;
+        --trame-on-accent: #fff;
+        --trame-radius: 0.25rem;
+    }
+}

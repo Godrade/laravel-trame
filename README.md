@@ -34,6 +34,36 @@ Import the package sources and the generated palette after Tailwind:
 
 Re-run `php artisan trame:sources` whenever `trame.palette` changes.
 
+### Theme
+
+Core blocks carry no brand of their own: they use your font, inherit the text colour of each section and
+draw hairlines in that colour. Three CSS variables set the rest:
+
+```css
+/* after the imports above */
+:root {
+    --trame-accent: var(--color-emerald-700);  /* solid buttons, default #000 */
+    --trame-on-accent: #fff;                   /* text on the accent, default #fff */
+    --trame-radius: 0;                         /* buttons, images, gallery, default .25rem */
+}
+```
+
+Editors can still pick a palette colour per block; the variables only apply when they do not.
+
+### Core blocks
+
+| Block | Type | Notes |
+|---|---|---|
+| Heading | `heading` | level h1–h6, size, per-screen alignment |
+| Text | `text` | rich text (paragraphs, h2, h3, lists, quotes, links) styled without the typography plugin |
+| Quote | `quote` | quoted text, author, source; also for testimonials |
+| Callout | `callout` | title and rich text set apart by a side rule (info, success, warning) |
+| Question & answer | `question` | native `<details>`, no JavaScript; stack several for a FAQ |
+| Button | `button` | solid, outline or link |
+| Image | `image` | alt text, optional caption |
+| Gallery | `gallery` | list of images with alt text and caption, columns per screen, crop format |
+| Spacer | `spacer` | vertical space, optional hairline |
+
 ### Authorization
 
 Every editor route is behind the `trame.edit` gate, which **denies everyone by default**:
@@ -124,7 +154,7 @@ edited through the device switcher of the editor.
 | Where | Setting | Default |
 |---|---|---|
 | Section, vertical padding | `settings.padding` (`none`, `sm`, `md`, `lg`, `xl`) | `md` |
-| Between the rows of a section | `settings.rows_gap` | `none` |
+| Between the rows of a section | `settings.rows_gap` | `md` |
 | Between the columns of a row | `settings.gap` on the row (`none`, `sm`, `md`, `lg`) | `md` |
 | Between the blocks of a column | `settings.gap` on the column | `sm` |
 | Around one block | `settings.margin_top`, `settings.margin_bottom` on the block | unset |
@@ -274,12 +304,18 @@ The view receives every field (translatable ones already resolved for the locale
 | `Field::select($name)` | option key | `->options(['a', 'b'])` or `['a' => 'Label']`, `->responsive()` |
 | `Field::color($name)` | palette token | `->allowCustom()` also accepts `#rrggbb`; render with `Tokens::color()` |
 | `Field::image($name)` | media id | resolve it with `MediaProvider::find()` |
+| `Field::repeater($name)` | list of items | `->fields([...])`, `->min()`, `->max()` (50 by default) |
 
 Common modifiers: `->label()`, `->default()`, `->required()`, `->help()`, `->rules([...])` (extra Laravel
 rules), `->translatable()` (text, textarea, richText and url only: one value per locale).
 
+A repeater stores `[{"id": "itm_…", "image": 3, "caption": {"fr": "…"}}]`. Items accept text, textarea,
+url, number, toggle, select, colour and image sub-fields (no rich text, no nested repeater); the editor adds,
+reorders and removes them. Values reach the view resolved for the locale, as a list of arrays.
+
 `->responsive()` (select only) stores one value per breakpoint. Render it with `Tokens::responsive()` and a
 literal class map: `ALIGN_RESPONSIVE` and `JUSTIFY_RESPONSIVE` are provided, add your own for other values.
+`->default(['base' => '2', 'md' => '3'])` sets a default per breakpoint.
 
 ### In-place editing
 

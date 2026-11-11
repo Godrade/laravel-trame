@@ -9,11 +9,11 @@ beforeEach(fn () => view()->addNamespace('fixtures', __DIR__.'/../Fixtures/views
 it('renders the grid and blocks in the requested locale', function () {
     $html = (string) Trame::render(trameDoc(
         [heading(['fr' => 'Bonjour', 'en' => 'Hello'], ['level' => 1])],
-        [['type' => 'quote', 'data' => ['quote' => ['fr' => 'Citation']]]],
+        [['type' => 'legacy-quote', 'data' => ['quote' => ['fr' => 'Citation']]]],
     ), 'en');
 
     expect($html)
-        ->toMatch('/<h1 class="font-bold tracking-tight text-3xl text-start text-slate-900"\s*>Hello<\/h1>/')
+        ->toMatch('/<h1 class="font-semibold text-balance text-3xl tracking-tight text-start"\s*>Hello<\/h1>/')
         ->toContain('grid grid-cols-12 gap-x-3 gap-y-6 md:gap-x-6')
         ->toContain('col-span-12 md:col-span-6')
         ->toContain('<blockquote>Citation</blockquote>')

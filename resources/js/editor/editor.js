@@ -48,7 +48,7 @@ export default function editor() {
 
         templates: [],
         mediaCache: {},
-        media: { open: false, field: null, items: [], page: 1, total: 0, loading: false, uploading: false },
+        media: { open: false, field: null, ctx: null, items: [], page: 1, total: 0, loading: false, uploading: false },
         templateDialog: { open: false, nodeId: null, name: '', global: false },
         templateMode: null, // { id, name, kind, is_global } while editing a template
         toast: null,
@@ -726,7 +726,12 @@ export default function editor() {
          * Object holding the field's value (node.data or node.settings). Reading never
          * changes the document: a missing object is only created when writing (create).
          */
-        container(field = null, create = false) {
+        container(field = null, create = false, ctx = null) {
+            // Inside a repeater, the item itself holds the sub-field values.
+            if (ctx) {
+                return ctx;
+            }
+
             const entry = this.selected;
 
             if (!entry) {
@@ -746,18 +751,24 @@ export default function editor() {
             return entry.node[key];
         },
 
-        value(field) {
+        value(field, ctx = null) {
             this.version;
             this.locale;
             this.breakpoint;
 
             return field.responsive
-                ? D.readResponsive(this.container(field), field, this.breakpoint)
-                : D.readField(this.container(field), field, this.locale);
+                ? D.readResponsive(this.container(field, false, ctx), field, this.breakpoint)
+                : D.readField(this.container(field, false, ctx), field, this.locale);
         },
 
-        setValue(field, value) {
+        setValue(field, value, ctx = null) {
             if (!this.selected) {
+                return;
+            }
+
+            if (ctx) {
+                this.mutate(() => D.writeField(ctx, field, this.locale, value), `${this.selectedId}:${ctx.id}:${field.name}:${this.locale}`);
+
                 return;
             }
 
@@ -772,10 +783,81 @@ export default function editor() {
         },
 
         /** Responsive field without its own value on the current breakpoint. */
-        isInherited(field) {
+        isInherited(field, ctx = null) {
             this.version;
 
-            return !!field.responsive && D.isResponsiveInherited(this.container(field), field, this.breakpoint);
+            return !!field.responsive && D.isResponsiveInherited(this.container(field, false, ctx), field, this.breakpoint);
+        },
+
+        /* ------------------------------------------------------------- repeaters */
+
+        /** Items of a repeater field (read only: never creates the list). */
+        items(field) {
+            this.version;
+
+            const list = this.container(field)[field.name];
+
+            return Array.isArray(list) ? list : [];
+        },
+
+        canAddItem(field) {
+            return this.items(field).length < (field.max ?? Infinity);
+        },
+
+        /** The list is created inside mutate() so undo also removes it. */
+        itemsForWrite(field) {
+            const container = this.container(field, true);
+
+            if (!Array.isArray(container[field.name])) {
+                container[field.name] = [];
+            }
+
+            return container[field.name];
+        },
+
+        addItem(field) {
+            if (!this.selected || !this.canAddItem(field)) {
+                return;
+            }
+
+            this.mutate(() => D.addItem(this.itemsForWrite(field), field.fields, this.fallback, field.max ?? Infinity));
+        },
+
+        removeItem(field, item) {
+            if (this.selected) {
+                this.mutate(() => D.removeItem(this.itemsForWrite(field), item.id));
+            }
+        },
+
+        moveItem(field, item, delta) {
+            if (this.selected) {
+                this.mutate(() => D.moveItem(this.itemsForWrite(field), item.id, delta));
+            }
+        },
+
+        /** Short label of an item: first text sub-field (editing locale, then fallback), else its image name. */
+        itemPreview(field, item) {
+            this.version;
+
+            for (const sub of field.fields ?? []) {
+                if (['text', 'textarea'].includes(sub.type)) {
+                    const text = D.stripTags(String(D.readField(item, sub, this.locale) || D.readField(item, sub, this.fallback) || ''));
+
+                    if (text) {
+                        return text;
+                    }
+                }
+            }
+
+            const image = (field.fields ?? []).find((sub) => sub.type === 'image');
+            const media = image ? this.mediaItem(item[image.name]) : null;
+
+            return media?.name ?? '';
+        },
+
+        /** Errors of one item sub-field, from paths like data.images.0.caption(.fr). */
+        itemFieldErrors(field, index, sub, item) {
+            return this.fieldErrors(sub, item, `${this.scopeOf(field)}.${field.name}.${index}.${sub.name}`);
         },
 
         /* ----------------------------------------------------------- visibility */
@@ -798,23 +880,27 @@ export default function editor() {
             }
         },
 
-        placeholder(field) {
+        placeholder(field, ctx = null) {
             if (!field.translatable || this.locale === this.fallback) {
                 return '';
             }
 
-            return D.stripTags(D.readField(this.container(field), field, this.fallback));
+            return D.stripTags(D.readField(this.container(field, false, ctx), field, this.fallback));
         },
 
-        isSelectedOption(field, option) {
-            return String(this.value(field)) === String(option.value);
+        isSelectedOption(field, option, ctx = null) {
+            return String(this.value(field, ctx)) === String(option.value);
         },
 
-        fieldErrors(field) {
-            const prefix = `${this.scopeOf(field)}.${field.name}`;
+        fieldErrors(field, ctx = null, path = null) {
+            const prefix = path ?? `${this.scopeOf(field)}.${field.name}`;
+            const all = this.errorMap.get(this.selectedId) ?? [];
 
+            // A repeater only shows its own list errors; its items show theirs.
             // Errors on another locale (e.g. required fallback while editing "en") are tagged with it.
-            const errors = (this.errorMap.get(this.selectedId) ?? []).filter((error) => error.rel === prefix || error.rel.startsWith(`${prefix}.`));
+            const errors = field.type === 'repeater'
+                ? all.filter((error) => error.rel === prefix)
+                : all.filter((error) => error.rel === prefix || error.rel.startsWith(`${prefix}.`));
             // "field required" + "field.fr required" say the same thing: keep the precise one.
             const precise = errors.some((error) => error.rel !== prefix);
 
@@ -881,8 +967,9 @@ export default function editor() {
             return this.mediaCache[id];
         },
 
-        openMedia(field) {
+        openMedia(field, ctx = null) {
             this.media.field = field;
+            this.media.ctx = ctx;
             this.media.open = true;
             this.loadMedia(1);
         },
@@ -934,7 +1021,7 @@ export default function editor() {
 
         pickMedia(item) {
             if (this.media.field) {
-                this.setValue(this.media.field, item.id);
+                this.setValue(this.media.field, item.id, this.media.ctx);
             }
 
             this.media.open = false;

@@ -116,3 +116,12 @@ it('keeps hidden nodes visible but marked in the editor', function () {
         ->toContain('data-trame-node="block" data-trame-hide="md"')
         ->not->toContain('md:max-lg:hidden');
 });
+
+it('accepts a per-breakpoint default for responsive fields', function () {
+    $field = Field::select('columns')->options(['1', '2', '3'])->default(['base' => '1', 'md' => '3', 'xl' => '2'])->responsive();
+
+    expect($field->defaultFor('fr'))->toBe(['base' => '1', 'md' => '3'])
+        // Numeric option keys come back as integers (PHP array keys); rendering casts them to strings.
+        ->and($field->normalize(['md' => '2'], ['fr'], app(\Godrade\Trame\Support\HtmlSanitizer::class)))->toEqual(['base' => '1', 'md' => '2'])
+        ->and($field->normalize('9', ['fr'], app(\Godrade\Trame\Support\HtmlSanitizer::class)))->toEqual(['base' => '1']);
+});

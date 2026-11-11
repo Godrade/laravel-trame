@@ -12,7 +12,12 @@ use InvalidArgumentException;
 
 final class Field
 {
-    public const TYPES = ['text', 'textarea', 'rich_text', 'url', 'number', 'toggle', 'select', 'color', 'image'];
+    public const TYPES = ['text', 'textarea', 'rich_text', 'url', 'number', 'toggle', 'select', 'color', 'image', 'repeater'];
+
+    /** Field types allowed inside a repeater item (no rich text, no nesting). */
+    private const ITEM_TYPES = ['text', 'textarea', 'url', 'number', 'toggle', 'select', 'color', 'image'];
+
+    private const REPEATER_MAX = 50;
 
     private ?string $label = null;
 
@@ -34,6 +39,9 @@ final class Field
     private int|float|null $max = null;
 
     private ?string $help = null;
+
+    /** @var array<int, Field> Item sub-fields (repeater only). */
+    private array $fields = [];
 
     /** @var array<int, mixed> */
     private array $extraRules = [];
@@ -90,6 +98,57 @@ final class Field
     public static function image(string $name): self
     {
         return new self($name, 'image');
+    }
+
+    /** A list of items, each holding the given sub-fields. Use ->fields([...]), ->min() and ->max(). */
+    public static function repeater(string $name): self
+    {
+        return new self($name, 'repeater');
+    }
+
+    /**
+     * Sub-fields of each repeater item. Rich text, nested repeaters and
+     * responsive fields are not supported inside items.
+     *
+     * @param  array<int, Field>  $fields
+     */
+    public function fields(array $fields): self
+    {
+        if ($this->type !== 'repeater') {
+            throw new InvalidArgumentException("Field type [{$this->type}] cannot have sub-fields.");
+        }
+
+        $names = [];
+
+        foreach ($fields as $field) {
+            if (! $field instanceof self) {
+                throw new InvalidArgumentException("Repeater [{$this->name}] sub-fields must be Field instances.");
+            }
+
+            if (! in_array($field->type, self::ITEM_TYPES, true)) {
+                throw new InvalidArgumentException("Field type [{$field->type}] is not allowed inside repeater [{$this->name}].");
+            }
+
+            if ($field->responsive) {
+                throw new InvalidArgumentException("Sub-field [{$field->name}] of repeater [{$this->name}] cannot be responsive.");
+            }
+
+            if ($field->name === 'id' || in_array($field->name, $names, true)) {
+                throw new InvalidArgumentException("Invalid or duplicate sub-field name [{$field->name}] in repeater [{$this->name}].");
+            }
+
+            $names[] = $field->name;
+        }
+
+        $this->fields = array_values($fields);
+
+        return $this;
+    }
+
+    /** @return array<int, Field> */
+    public function childFields(): array
+    {
+        return $this->fields;
     }
 
     public function label(string $label): self
@@ -205,12 +264,16 @@ final class Field
 
     public function defaultFor(string $fallback): mixed
     {
+        if ($this->type === 'repeater') {
+            return [];
+        }
+
         if ($this->translatable) {
             return $this->default === null ? [] : [$fallback => $this->default];
         }
 
         if ($this->responsive) {
-            return $this->default === null ? null : ['base' => $this->default];
+            return $this->responsiveDefault() ?: null;
         }
 
         return $this->default;
@@ -224,6 +287,10 @@ final class Field
      */
     public function validationRules(array $locales, string $fallback): array
     {
+        if ($this->type === 'repeater') {
+            return $this->repeaterRules($locales, $fallback);
+        }
+
         $base = $this->baseRules();
 
         if ($this->responsive) {
@@ -259,8 +326,12 @@ final class Field
      *
      * @param  array<int, string>  $locales
      */
-    public function normalize(mixed $value, array $locales, HtmlSanitizer $sanitizer): mixed
+    public function normalize(mixed $value, array $locales, HtmlSanitizer $sanitizer, ?string $fallback = null): mixed
     {
+        if ($this->type === 'repeater') {
+            return $this->normalizeItems($value, $locales, $sanitizer, $fallback ?? ($locales[0] ?? ''));
+        }
+
         if ($this->translatable) {
             $out = [];
 
@@ -284,11 +355,81 @@ final class Field
         return $value === null ? null : $this->cast($value, $sanitizer);
     }
 
+    /**
+     * @param  array<int, string>  $locales
+     * @return array<int, array<string, mixed>>
+     */
+    private function normalizeItems(mixed $value, array $locales, HtmlSanitizer $sanitizer, string $fallback): array
+    {
+        $items = [];
+        $seen = [];
+
+        foreach (is_array($value) ? $value : [] as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $id = $item['id'] ?? null;
+
+            if (! is_string($id) || ! preg_match('/^[A-Za-z0-9_-]{1,64}$/', $id) || isset($seen[$id])) {
+                do {
+                    $id = 'itm_'.Str::lower(Str::random(10));
+                } while (isset($seen[$id]));
+            }
+
+            $seen[$id] = true;
+            $out = ['id' => $id];
+
+            foreach ($this->fields as $field) {
+                $out[$field->name] = array_key_exists($field->name, $item)
+                    ? $field->normalize($item[$field->name], $locales, $sanitizer, $fallback)
+                    : $field->defaultFor($fallback);
+            }
+
+            $items[] = $out;
+
+            if (count($items) >= ($this->max ?? self::REPEATER_MAX)) {
+                break;
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * @param  array<int, string>  $locales
+     * @return array<string, array<int, mixed>>
+     */
+    private function repeaterRules(array $locales, string $fallback): array
+    {
+        $rules = [
+            $this->name => [
+                $this->required ? 'required' : 'nullable',
+                'array',
+                'list',
+                'min:'.(int) ($this->min ?? 0),
+                'max:'.(int) ($this->max ?? self::REPEATER_MAX),
+                ...$this->extraRules,
+            ],
+            $this->name.'.*' => ['array'],
+            $this->name.'.*.id' => ['nullable', 'string', 'regex:/^[A-Za-z0-9_-]{1,64}$/'],
+        ];
+
+        foreach ($this->fields as $field) {
+            foreach ($field->validationRules($locales, $fallback) as $key => $fieldRules) {
+                $rules[$this->name.'.*.'.$key] = $fieldRules;
+            }
+        }
+
+        return $rules;
+    }
+
     /** @return array<string, int|string>|null */
     private function normalizeResponsive(mixed $value): ?array
     {
         $value = is_array($value) ? $value : ['base' => $value];
-        $base = $this->castOption($value['base'] ?? null);
+        $default = $this->responsiveDefault()['base'] ?? null;
+        $base = $this->hasOption($value['base'] ?? null) ? $this->castOption($value['base']) : ($default === null ? null : $this->castOption($default));
         $out = $base === null ? [] : ['base' => $base];
 
         foreach (array_keys(Grid::BREAKPOINTS) as $breakpoint) {
@@ -299,6 +440,23 @@ final class Field
 
         // Without a default, base may stay unset while md/lg are set (e.g. a margin on desktop only).
         return $out === [] ? null : $out;
+    }
+
+    /**
+     * Default of a responsive field as {breakpoint: value}: ->default('3') is the
+     * base value, ->default(['base' => '1', 'md' => '3']) sets several breakpoints.
+     *
+     * @return array<string, mixed>
+     */
+    private function responsiveDefault(): array
+    {
+        if ($this->default === null) {
+            return [];
+        }
+
+        return is_array($this->default)
+            ? array_intersect_key($this->default, Grid::BREAKPOINTS)
+            : ['base' => $this->default];
     }
 
     private function hasOption(mixed $value): bool
@@ -349,8 +507,9 @@ final class Field
                 : null,
             'palette' => $this->type === 'color' ? Palette::colors() : null,
             'allow_custom' => $this->type === 'color' ? $this->allowCustomColor : null,
+            'fields' => $this->type === 'repeater' ? array_map(fn (self $field) => $field->toArray(), $this->fields) : null,
             'min' => $this->min,
-            'max' => $this->max,
+            'max' => $this->type === 'repeater' ? ($this->max ?? self::REPEATER_MAX) : $this->max,
             'help' => $this->help,
         ], fn ($value) => $value !== null);
     }

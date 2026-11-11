@@ -24,7 +24,8 @@ final class SpacerBlock extends Block
         return [
             Field::select('size')->options(Tokens::keys(Tokens::SPACER))->default('md'),
             Field::toggle('divider'),
-            Field::color('color')->default('slate-200'),
+            // No colour: a hairline in the current text colour, readable on any background.
+            Field::color('color'),
         ];
     }
 
@@ -35,7 +36,7 @@ final class SpacerBlock extends Block
         return [
             'classes' => Tokens::join('flex items-center', Tokens::pick(Tokens::SPACER, $data['size'], 'md')),
             'divider' => (bool) $data['divider'],
-            'line' => Tokens::join('w-full border-t', $border['class']),
+            'line' => Tokens::join('w-full border-t', $border['class'] ?: Tokens::RULE),
             'style' => $border['style'],
         ];
     }

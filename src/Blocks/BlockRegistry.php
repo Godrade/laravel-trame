@@ -3,8 +3,12 @@
 namespace Godrade\Trame\Blocks;
 
 use Godrade\Trame\Blocks\Core\ButtonBlock;
+use Godrade\Trame\Blocks\Core\CalloutBlock;
+use Godrade\Trame\Blocks\Core\GalleryBlock;
 use Godrade\Trame\Blocks\Core\HeadingBlock;
 use Godrade\Trame\Blocks\Core\ImageBlock;
+use Godrade\Trame\Blocks\Core\QuestionBlock;
+use Godrade\Trame\Blocks\Core\QuoteBlock;
 use Godrade\Trame\Blocks\Core\SpacerBlock;
 use Godrade\Trame\Blocks\Core\TextBlock;
 use Godrade\Trame\Exceptions\InvalidBlockException;
@@ -17,10 +21,15 @@ use ReflectionClass;
 final class BlockRegistry
 {
     public const CORE = [
+        // Palette order within each category.
         HeadingBlock::class,
         TextBlock::class,
-        ImageBlock::class,
+        QuoteBlock::class,
+        CalloutBlock::class,
+        QuestionBlock::class,
         ButtonBlock::class,
+        ImageBlock::class,
+        GalleryBlock::class,
         SpacerBlock::class,
     ];
 

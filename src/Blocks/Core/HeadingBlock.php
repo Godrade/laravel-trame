@@ -24,7 +24,8 @@ final class HeadingBlock extends Block
             Field::select('level')->options([1 => 'H1', 2 => 'H2', 3 => 'H3', 4 => 'H4', 5 => 'H5', 6 => 'H6'])->default(2),
             Field::select('size')->options(Tokens::keys(Tokens::HEADING_SIZE))->default('3xl'),
             Field::select('align')->options(Tokens::keys(Tokens::ALIGN))->default('start')->responsive(),
-            Field::color('color')->default('slate-900'),
+            // No default: the heading inherits the section's text colour.
+            Field::color('color'),
         ];
     }
 
@@ -35,7 +36,7 @@ final class HeadingBlock extends Block
         return [
             'tag' => 'h'.max(1, min(6, (int) $data['level'])),
             'classes' => Tokens::join(
-                'font-bold tracking-tight',
+                'font-semibold text-balance',
                 Tokens::pick(Tokens::HEADING_SIZE, $data['size'], '3xl'),
                 Tokens::responsive(Tokens::ALIGN_RESPONSIVE, $data['align'], 'start'),
                 $color['class'],

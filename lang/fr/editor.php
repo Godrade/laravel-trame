@@ -67,6 +67,8 @@ return [
     'missing_template' => 'Modèle introuvable',
     'confirm_delete_template' => 'Supprimer ce modèle ? Les pages qui l’utilisent en global ne l’afficheront plus.',
 
+    'no_items' => 'Aucun élément pour l’instant.',
+    'add_item' => 'Ajouter un élément',
     'choose_image' => 'Choisir une image',
     'change_image' => 'Changer',
     'remove' => 'Retirer',

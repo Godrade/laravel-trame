@@ -13,7 +13,7 @@ final class SectionLayout
         return [
             Field::color('bg')->allowCustom(),
             Field::select('padding')->options(Tokens::keys(Tokens::SECTION_PADDING))->default('md')->responsive(),
-            Field::select('rows_gap')->options(Tokens::SPACE)->default('none')->responsive(),
+            Field::select('rows_gap')->options(Tokens::SPACE)->default('md')->responsive(),
             Field::select('container')->options(Tokens::keys(Tokens::CONTAINER))->default('boxed'),
             Field::text('anchor')->max(64)->rules(['alpha_dash']),
         ];
@@ -32,7 +32,7 @@ final class SectionLayout
             'container' => Tokens::join(
                 Tokens::pick(Tokens::CONTAINER, $settings['container'] ?? null, 'boxed'),
                 'flex flex-col',
-                Tokens::responsive(Tokens::ROWS_GAP_RESPONSIVE, $settings['rows_gap'] ?? null, 'none'),
+                Tokens::responsive(Tokens::ROWS_GAP_RESPONSIVE, $settings['rows_gap'] ?? null, 'md'),
             ),
             'style' => $bg['style'],
         ];
