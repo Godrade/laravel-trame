@@ -3,8 +3,10 @@
 namespace Godrade\Trame\Tests;
 
 use Godrade\Trame\TrameServiceProvider;
+use Orchestra\Testbench\Attributes\WithMigration;
 use Orchestra\Testbench\TestCase as Orchestra;
 
+#[WithMigration]
 abstract class TestCase extends Orchestra
 {
     protected function getPackageProviders($app): array
@@ -22,10 +24,5 @@ abstract class TestCase extends Orchestra
         $app['config']->set('trame.editor.preview.vite', []);
         $app['config']->set('trame.blocks.discover.path', __DIR__.'/Fixtures/Blocks');
         $app['config']->set('trame.blocks.discover.namespace', 'Godrade\\Trame\\Tests\\Fixtures\\Blocks');
-    }
-
-    protected function defineDatabaseMigrations(): void
-    {
-        $this->loadLaravelMigrations();
     }
 }
