@@ -42,6 +42,8 @@ export function fieldDefaults(fields, fallback) {
     for (const field of fields ?? []) {
         if (field.translatable) {
             data[field.name] = field.default != null ? { [fallback]: field.default } : {};
+        } else if (field.responsive) {
+            data[field.name] = field.default != null ? { base: field.default } : null;
         } else {
             data[field.name] = field.default ?? (field.type === 'toggle' ? false : null);
         }
@@ -375,6 +377,74 @@ export function writeField(container, field, locale, value) {
     } else {
         container[field.name] = value;
     }
+}
+
+/** Responsive value as an object; a legacy scalar is the base value. */
+function responsiveObject(value) {
+    if (isObject(value)) {
+        return value;
+    }
+
+    return value === null || value === undefined ? {} : { base: value };
+}
+
+/** Effective value of a responsive field on a breakpoint (lg inherits md, md inherits base). */
+export function readResponsive(container, field, breakpoint) {
+    const value = responsiveObject(isObject(container) ? container[field.name] : undefined);
+    const chain = BREAKPOINTS.slice(0, BREAKPOINTS.indexOf(breakpoint) + 1).reverse();
+
+    for (const key of chain) {
+        if (value[key] !== undefined && value[key] !== null) {
+            return value[key];
+        }
+    }
+
+    return field.default ?? null;
+}
+
+export function isResponsiveInherited(container, field, breakpoint) {
+    const value = responsiveObject(isObject(container) ? container[field.name] : undefined);
+
+    return breakpoint !== 'base' && (value[breakpoint] === undefined || value[breakpoint] === null);
+}
+
+/** Set (or, with null on md/lg, reset to inherited) a responsive field on one breakpoint. */
+export function writeResponsive(container, field, breakpoint, value) {
+    const next = { ...responsiveObject(container[field.name]) };
+
+    if ((value === null || value === undefined) && breakpoint !== 'base') {
+        delete next[breakpoint];
+    } else {
+        next[breakpoint] = value;
+    }
+
+    container[field.name] = next;
+}
+
+/** Breakpoints a node is hidden on (settings.hide), in breakpoint order. */
+export function hiddenOn(node) {
+    const hide = node?.settings?.hide;
+
+    return Array.isArray(hide) ? BREAKPOINTS.filter((breakpoint) => hide.includes(breakpoint)) : [];
+}
+
+/** Toggle visibility on one breakpoint; settings.hide is removed when empty. */
+export function toggleHidden(node, breakpoint) {
+    const hide = hiddenOn(node);
+    const next = hide.includes(breakpoint) ? hide.filter((b) => b !== breakpoint) : BREAKPOINTS.filter((b) => b === breakpoint || hide.includes(b));
+
+    if (next.length) {
+        node.settings = { ...(isObject(node.settings) ? node.settings : {}), hide: next };
+    } else if (isObject(node.settings)) {
+        delete node.settings.hide;
+
+        // Blocks (nodes with "data") only carry settings for hide.
+        if ('data' in node && Object.keys(node.settings).length === 0) {
+            delete node.settings;
+        }
+    }
+
+    return next;
 }
 
 export function stripTags(html) {

@@ -23,7 +23,7 @@ final class HeadingBlock extends Block
             Field::text('text')->translatable()->required(),
             Field::select('level')->options([1 => 'H1', 2 => 'H2', 3 => 'H3', 4 => 'H4', 5 => 'H5', 6 => 'H6'])->default(2),
             Field::select('size')->options(Tokens::keys(Tokens::HEADING_SIZE))->default('3xl'),
-            Field::select('align')->options(Tokens::keys(Tokens::ALIGN))->default('start'),
+            Field::select('align')->options(Tokens::keys(Tokens::ALIGN))->default('start')->responsive(),
             Field::color('color')->default('slate-900'),
         ];
     }
@@ -37,7 +37,7 @@ final class HeadingBlock extends Block
             'classes' => Tokens::join(
                 'font-bold tracking-tight',
                 Tokens::pick(Tokens::HEADING_SIZE, $data['size'], '3xl'),
-                Tokens::pick(Tokens::ALIGN, $data['align'], 'start'),
+                Tokens::responsive(Tokens::ALIGN_RESPONSIVE, $data['align'], 'start'),
                 $color['class'],
             ),
             'style' => $color['style'],

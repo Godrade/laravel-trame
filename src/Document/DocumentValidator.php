@@ -11,6 +11,7 @@ use Godrade\Trame\Layout\SectionLayout;
 use Godrade\Trame\Models\Template;
 use Godrade\Trame\Support\Grid;
 use Godrade\Trame\Support\Localizer;
+use Godrade\Trame\Support\Tokens;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
@@ -88,6 +89,7 @@ final class DocumentValidator
         }
 
         $this->settings(SectionLayout::schema(), $node['settings'] ?? [], "{$path}.settings");
+        $this->hide($node, $path);
 
         $rows = $node['rows'] ?? [];
 
@@ -125,6 +127,7 @@ final class DocumentValidator
         }
 
         $this->settings(RowLayout::schema(), $node['settings'] ?? [], "{$path}.settings");
+        $this->hide($node, $path);
 
         $columns = $node['columns'] ?? null;
 
@@ -160,6 +163,7 @@ final class DocumentValidator
         }
 
         $this->settings(ColumnLayout::schema(), $node['settings'] ?? [], "{$path}.settings");
+        $this->hide($node, $path);
 
         $blocks = $node['blocks'] ?? [];
 
@@ -210,6 +214,32 @@ final class DocumentValidator
         }
 
         $this->settings($block->fields(), $data, "{$path}.data");
+
+        if (array_key_exists('settings', $node) && ! is_array($node['settings'])) {
+            $this->fail("{$path}.settings", 'structure');
+
+            return;
+        }
+
+        $this->hide($node, $path);
+    }
+
+    /** settings.hide: null or a list of breakpoints (base, md, lg). */
+    private function hide(array $node, string $path): void
+    {
+        $hide = is_array($node['settings'] ?? null) ? ($node['settings']['hide'] ?? null) : null;
+
+        if ($hide === null) {
+            return;
+        }
+
+        if (
+            ! is_array($hide)
+            || ! array_is_list($hide)
+            || array_filter($hide, fn (mixed $breakpoint) => ! is_string($breakpoint) || ! isset(Tokens::HIDE[$breakpoint])) !== []
+        ) {
+            $this->fail("{$path}.settings.hide", 'breakpoint');
+        }
     }
 
     /** @param array<int, Field> $fields */

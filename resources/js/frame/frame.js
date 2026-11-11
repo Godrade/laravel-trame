@@ -32,6 +32,10 @@ style.textContent = `
     .trame-ghost { opacity: .35; }
     [data-trame-field]:hover { cursor: text; }
     [data-trame-field][contenteditable]:not([contenteditable="false"]) { outline: 2px solid #f97316 !important; outline-offset: 2px; cursor: text; }
+    /* Hidden on the previewed breakpoint (Tailwind defaults: md 48rem, lg 64rem): kept selectable, dimmed */
+    @media (max-width: 47.999rem) { [data-trame-hide~="base"] { opacity: .35; background-image: repeating-linear-gradient(135deg, rgba(113,113,122,.12) 0 6px, transparent 6px 12px); } }
+    @media (min-width: 48rem) and (max-width: 63.999rem) { [data-trame-hide~="md"] { opacity: .35; background-image: repeating-linear-gradient(135deg, rgba(113,113,122,.12) 0 6px, transparent 6px 12px); } }
+    @media (min-width: 64rem) { [data-trame-hide~="lg"] { opacity: .35; background-image: repeating-linear-gradient(135deg, rgba(113,113,122,.12) 0 6px, transparent 6px 12px); } }
     #trame-drop { position: absolute; z-index: 2147483001; height: 4px; margin-top: -2px; border-radius: 2px; background: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,.25); pointer-events: none; display: none; }
     .trame-chosen { cursor: grabbing !important; }
     #trame-hover, #trame-selected { position: absolute; pointer-events: none; z-index: 2147483000; border: 2px solid; border-radius: 3px; display: none; box-sizing: border-box; }

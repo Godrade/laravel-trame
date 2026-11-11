@@ -170,3 +170,49 @@ test('template errors map onto wrapper paths', () => {
         name: ['x'],
     });
 });
+
+/* ---------------------------------------------------------- responsive settings */
+
+const align = { name: 'align', type: 'select', responsive: true, default: 'start' };
+
+test('responsive fields default to a base value', () => {
+    assert.deepEqual(D.fieldDefaults([align], 'fr'), { align: { base: 'start' } });
+});
+
+test('responsive values inherit from the breakpoint below', () => {
+    const data = { align: { base: 'center', md: 'end' } };
+
+    assert.equal(D.readResponsive(data, align, 'base'), 'center');
+    assert.equal(D.readResponsive(data, align, 'md'), 'end');
+    assert.equal(D.readResponsive(data, align, 'lg'), 'end');
+    assert.equal(D.isResponsiveInherited(data, align, 'lg'), true);
+    assert.equal(D.isResponsiveInherited(data, align, 'md'), false);
+    assert.equal(D.readResponsive({ align: 'end' }, align, 'lg'), 'end', 'legacy scalar is the base value');
+    assert.equal(D.readResponsive({}, align, 'md'), 'start', 'falls back to the field default');
+});
+
+test('writing a responsive value only touches one breakpoint, null resets it', () => {
+    const data = { align: 'center' };
+
+    D.writeResponsive(data, align, 'lg', 'start');
+    assert.deepEqual(data.align, { base: 'center', lg: 'start' });
+
+    D.writeResponsive(data, align, 'lg', null);
+    assert.deepEqual(data.align, { base: 'center' });
+});
+
+test('toggling visibility keeps breakpoint order and drops empty settings on blocks', () => {
+    const block = { id: 'blk_1', type: 'heading', data: {} };
+
+    assert.deepEqual(D.toggleHidden(block, 'lg'), ['lg']);
+    assert.deepEqual(D.toggleHidden(block, 'base'), ['base', 'lg']);
+    assert.deepEqual(D.hiddenOn(block), ['base', 'lg']);
+    D.toggleHidden(block, 'base');
+    D.toggleHidden(block, 'lg');
+    assert.equal(block.settings, undefined);
+
+    const section = { id: 'sec_1', type: 'section', settings: { padding: 'md' }, rows: [] };
+    D.toggleHidden(section, 'md');
+    D.toggleHidden(section, 'md');
+    assert.deepEqual(section.settings, { padding: 'md' });
+});

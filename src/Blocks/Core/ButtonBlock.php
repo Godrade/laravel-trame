@@ -25,7 +25,7 @@ final class ButtonBlock extends Block
             Field::toggle('new_tab'),
             Field::select('variant')->options(['solid', 'outline'])->default('solid'),
             Field::color('color')->default('indigo-600'),
-            Field::select('align')->options(Tokens::keys(Tokens::JUSTIFY))->default('start'),
+            Field::select('align')->options(Tokens::keys(Tokens::JUSTIFY))->default('start')->responsive(),
         ];
     }
 
@@ -41,7 +41,7 @@ final class ButtonBlock extends Block
         return [
             // Same allow-list as the url field rule, re-applied for previews of unsaved data.
             'href' => preg_match('/^(https?:\/\/|\/|#|mailto:|tel:)/i', $url) ? $url : '#',
-            'wrapper' => Tokens::join('flex', Tokens::pick(Tokens::JUSTIFY, $data['align'], 'start')),
+            'wrapper' => Tokens::join('flex', Tokens::responsive(Tokens::JUSTIFY_RESPONSIVE, $data['align'], 'start')),
             'classes' => Tokens::join(
                 'inline-flex items-center rounded-md px-5 py-2.5 text-sm font-semibold transition hover:opacity-90',
                 $outline ? 'border-2 bg-transparent' : 'text-white',

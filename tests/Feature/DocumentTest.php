@@ -65,7 +65,7 @@ it('normalizes ids, defaults and spans', function () {
         ->and($section['settings'])->toMatchArray(['padding' => 'md', 'container' => 'boxed'])
         ->and($column['span'])->toBe(['base' => 12, 'md' => 6])
         ->and($block)->toMatchArray(['type' => 'heading', 'v' => 1])
-        ->and($block['data'])->toMatchArray(['text' => ['fr' => 'Salut'], 'level' => 2, 'align' => 'start']);
+        ->and($block['data'])->toMatchArray(['text' => ['fr' => 'Salut'], 'level' => 2, 'align' => ['base' => 'start']]);
 });
 
 it('migrates blocks stored with an older version', function () {

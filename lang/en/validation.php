@@ -11,4 +11,6 @@ return [
     'image' => 'Invalid image reference.',
     'global_ref' => 'This global :kind template does not exist.',
     'conflict' => 'This content was modified by someone else. Reload it before saving.',
+    'breakpoint' => 'Unknown breakpoint: use base, md or lg.',
+    'option' => 'This value is not one of the available options.',
 ];

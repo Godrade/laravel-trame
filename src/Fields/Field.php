@@ -2,6 +2,7 @@
 
 namespace Godrade\Trame\Fields;
 
+use Godrade\Trame\Support\Grid;
 use Godrade\Trame\Support\HtmlSanitizer;
 use Godrade\Trame\Support\Palette;
 use Illuminate\Support\Facades\Lang;
@@ -20,6 +21,8 @@ final class Field
     private bool $required = false;
 
     private bool $translatable = false;
+
+    private bool $responsive = false;
 
     /** @var array<int|string, string> value => label */
     private array $options = [];
@@ -121,6 +124,23 @@ final class Field
         return $this;
     }
 
+    /**
+     * One value per breakpoint, edited per device in the editor:
+     * {"base": "center", "md": "start"}. md and lg are optional and inherit
+     * from the breakpoint below. A plain scalar is read as the base value.
+     * Select fields only; render with Tokens::responsive().
+     */
+    public function responsive(bool $responsive = true): self
+    {
+        if ($responsive && $this->type !== 'select') {
+            throw new InvalidArgumentException("Field type [{$this->type}] cannot be responsive.");
+        }
+
+        $this->responsive = $responsive;
+
+        return $this;
+    }
+
     /** @param array<int|string, string> $options list of values, or value => label */
     public function options(array $options): self
     {
@@ -173,6 +193,11 @@ final class Field
         return $this->translatable;
     }
 
+    public function isResponsive(): bool
+    {
+        return $this->responsive;
+    }
+
     public function isRequired(): bool
     {
         return $this->required;
@@ -182,6 +207,10 @@ final class Field
     {
         if ($this->translatable) {
             return $this->default === null ? [] : [$fallback => $this->default];
+        }
+
+        if ($this->responsive) {
+            return $this->default === null ? null : ['base' => $this->default];
         }
 
         return $this->default;
@@ -196,6 +225,10 @@ final class Field
     public function validationRules(array $locales, string $fallback): array
     {
         $base = $this->baseRules();
+
+        if ($this->responsive) {
+            return [$this->name => [$this->required ? 'required' : 'nullable', $this->responsiveRule()]];
+        }
 
         if (! $this->translatable) {
             return [$this->name => [$this->required ? 'required' : 'nullable', ...$base]];
@@ -244,7 +277,64 @@ final class Field
             return $out;
         }
 
+        if ($this->responsive) {
+            return $this->normalizeResponsive($value);
+        }
+
         return $value === null ? null : $this->cast($value, $sanitizer);
+    }
+
+    /** @return array<string, int|string>|null */
+    private function normalizeResponsive(mixed $value): ?array
+    {
+        $value = is_array($value) ? $value : ['base' => $value];
+        $base = $this->castOption($value['base'] ?? null);
+
+        if ($base === null) {
+            return null;
+        }
+
+        $out = ['base' => $base];
+
+        foreach (array_keys(Grid::BREAKPOINTS) as $breakpoint) {
+            if ($breakpoint !== 'base' && isset($value[$breakpoint]) && $this->hasOption($value[$breakpoint])) {
+                $out[$breakpoint] = $this->castOption($value[$breakpoint]);
+            }
+        }
+
+        return $out;
+    }
+
+    private function hasOption(mixed $value): bool
+    {
+        return is_scalar($value) && in_array((string) $value, array_map(strval(...), array_keys($this->options)), true);
+    }
+
+    private function responsiveRule(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            $values = is_array($value) ? $value : ['base' => $value];
+
+            if (array_diff(array_map(strval(...), array_keys($values)), array_keys(Grid::BREAKPOINTS)) !== []) {
+                $fail(__('trame::validation.breakpoint'));
+
+                return;
+            }
+
+            if ($this->required && ($values['base'] ?? null) === null) {
+                $fail(__('trame::validation.option'));
+
+                return;
+            }
+
+            foreach ($values as $item) {
+                if ($item !== null && ! $this->hasOption($item)) {
+                    $fail(__('trame::validation.option'));
+
+                    return;
+                }
+            }
+        };
     }
 
     /** @return array<string, mixed> Definition consumed by the editor. */
@@ -257,6 +347,7 @@ final class Field
             'default' => $this->default,
             'required' => $this->required,
             'translatable' => $this->translatable,
+            'responsive' => $this->responsive ?: null,
             'options' => $this->type === 'select'
                 ? array_map(fn ($value, $label) => ['value' => $value, 'label' => $label], array_keys($this->options), $this->options)
                 : null,

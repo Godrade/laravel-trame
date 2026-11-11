@@ -105,7 +105,9 @@ Page → Sections → Rows → Columns (span per breakpoint: base, md, lg) → B
         "settings": { "valign": "start" },
         "blocks": [
           { "id": "blk_1", "type": "heading", "v": 1,
-            "data": { "text": { "fr": "Bienvenue", "en": "Welcome" }, "level": 1, "color": "white" } }
+            "data": { "text": { "fr": "Bienvenue", "en": "Welcome" }, "level": 1, "color": "white",
+                      "align": { "base": "center", "lg": "start" } },
+            "settings": { "hide": ["base"] } }
         ]
       }]
     }]
@@ -115,6 +117,15 @@ Page → Sections → Rows → Columns (span per breakpoint: base, md, lg) → B
 
 Settings store **semantic values** (`"padding": "lg"`), never classes. Mapping lives in
 `Godrade\Trame\Support\Tokens`.
+
+**Per-screen settings.** Breakpoints are `base` (mobile), `md` (tablet, ≥ 48rem) and `lg` (desktop, ≥ 64rem),
+edited through the device switcher of the editor.
+
+- `settings.hide` on a section, row, column or block lists the breakpoints it is hidden on. It is stored only
+  when not empty. Public output uses `max-md:hidden`, `md:max-lg:hidden` and `lg:hidden` (a block gets a
+  wrapping `<div>`). In the editor the node stays selectable and is dimmed on the matching device.
+- A responsive select stores one value per breakpoint; `md` and `lg` are optional and inherit from the
+  breakpoint below. A plain scalar (data saved before the field became responsive) is read as `base`.
 
 Any section, row or block can be replaced by a global template reference:
 `{ "type": "global", "ref": 12 }`.
@@ -197,6 +208,11 @@ Stored documents are migrated on read and on save. Never rename `$type` once in 
 
 Field types: `text`, `textarea`, `richText` (sanitized), `url` (http(s), relative, `#`, `mailto:`, `tel:` only),
 `number`, `toggle`, `select`, `color` (palette, `->allowCustom()` for hex), `image`.
+
+**Per-screen values:** `Field::select('align')->options([...])->responsive()` lets editors set a value per
+device. Render it with `Tokens::responsive(Tokens::ALIGN_RESPONSIVE, $data['align'], 'start')`
+(`JUSTIFY_RESPONSIVE` for flex alignment). The class maps are written literally in `Tokens` so Tailwind
+detects them; add your own literal map for other responsive values.
 
 ## Editor API
 

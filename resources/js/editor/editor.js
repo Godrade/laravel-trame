@@ -732,8 +732,11 @@ export default function editor() {
         value(field) {
             this.version;
             this.locale;
+            this.breakpoint;
 
-            return D.readField(this.container(), field, this.locale);
+            return field.responsive
+                ? D.readResponsive(this.container(), field, this.breakpoint)
+                : D.readField(this.container(), field, this.locale);
         },
 
         setValue(field, value) {
@@ -743,7 +746,40 @@ export default function editor() {
                 return;
             }
 
+            if (field.responsive) {
+                this.mutate(() => D.writeResponsive(container, field, this.breakpoint, value), `${this.selectedId}:${field.name}:${this.breakpoint}`);
+
+                return;
+            }
+
             this.mutate(() => D.writeField(container, field, this.locale, value), `${this.selectedId}:${field.name}:${this.locale}`);
+        },
+
+        /** Responsive field without its own value on the current breakpoint. */
+        isInherited(field) {
+            this.version;
+
+            return !!field.responsive && D.isResponsiveInherited(this.container(), field, this.breakpoint);
+        },
+
+        /* ----------------------------------------------------------- visibility */
+
+        get canHide() {
+            return ['section', 'row', 'column', 'block'].includes(this.selected?.kind);
+        },
+
+        isHidden(breakpoint) {
+            this.version;
+
+            return D.hiddenOn(this.selected?.node).includes(breakpoint);
+        },
+
+        toggleHidden(breakpoint) {
+            const entry = this.selected;
+
+            if (entry) {
+                this.mutate(() => D.toggleHidden(entry.node, breakpoint));
+            }
         },
 
         placeholder(field) {

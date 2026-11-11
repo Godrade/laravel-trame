@@ -15,6 +15,25 @@ final class Tokens
 
     public const JUSTIFY = ['start' => 'justify-start', 'center' => 'justify-center', 'end' => 'justify-end'];
 
+    /** Per-breakpoint variants, for Field::select(...)->responsive() values. */
+    public const ALIGN_RESPONSIVE = [
+        'base' => self::ALIGN,
+        'md' => ['start' => 'md:text-start', 'center' => 'md:text-center', 'end' => 'md:text-end'],
+        'lg' => ['start' => 'lg:text-start', 'center' => 'lg:text-center', 'end' => 'lg:text-end'],
+    ];
+
+    public const JUSTIFY_RESPONSIVE = [
+        'base' => self::JUSTIFY,
+        'md' => ['start' => 'md:justify-start', 'center' => 'md:justify-center', 'end' => 'md:justify-end'],
+        'lg' => ['start' => 'lg:justify-start', 'center' => 'lg:justify-center', 'end' => 'lg:justify-end'],
+    ];
+
+    /**
+     * Breakpoint => class hiding an element on that breakpoint only.
+     * Range variants leave the element's display untouched elsewhere.
+     */
+    public const HIDE = ['base' => 'max-md:hidden', 'md' => 'md:max-lg:hidden', 'lg' => 'lg:hidden'];
+
     public const HEADING_SIZE = ['xl' => 'text-xl', '2xl' => 'text-2xl', '3xl' => 'text-3xl', '4xl' => 'text-4xl', '5xl' => 'text-5xl'];
 
     public const SECTION_PADDING = ['none' => 'py-0', 'sm' => 'py-8', 'md' => 'py-12', 'lg' => 'py-20', 'xl' => 'py-32'];
@@ -43,6 +62,46 @@ final class Tokens
     public static function pick(array $map, mixed $key, string $default): string
     {
         return $map[(string) $key] ?? $map[$default];
+    }
+
+    /**
+     * Responsive value ({"base": "center", "md": "start"}, or a plain scalar
+     * treated as base) => classes. md and lg are optional and inherit.
+     *
+     * @param  array<string, array<string, string>>  $maps  breakpoint => (value => class)
+     */
+    public static function responsive(array $maps, mixed $value, string $default): string
+    {
+        $value = is_array($value) ? $value : ['base' => $value];
+        $classes = [self::pick($maps['base'], $value['base'] ?? null, $default)];
+
+        foreach (['md', 'lg'] as $breakpoint) {
+            $key = $value[$breakpoint] ?? null;
+
+            if ($key !== null && isset($maps[$breakpoint][(string) $key])) {
+                $classes[] = $maps[$breakpoint][(string) $key];
+            }
+        }
+
+        return implode(' ', $classes);
+    }
+
+    /** @param mixed $hide List of breakpoints the node is hidden on. */
+    public static function hide(mixed $hide): string
+    {
+        return implode(' ', array_map(fn (string $breakpoint) => self::HIDE[$breakpoint], self::hiddenOn($hide)));
+    }
+
+    /**
+     * Known breakpoints only, deduplicated, in breakpoint order.
+     *
+     * @return array<int, string>
+     */
+    public static function hiddenOn(mixed $hide): array
+    {
+        $hide = is_array($hide) ? array_map(strval(...), array_filter($hide, is_scalar(...))) : [];
+
+        return array_values(array_filter(array_keys(self::HIDE), fn (string $breakpoint) => in_array($breakpoint, $hide, true)));
     }
 
     /** @param array<string, string> $map @return array<int, string> */

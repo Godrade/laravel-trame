@@ -11,4 +11,6 @@ return [
     'image' => 'Référence d\'image invalide.',
     'global_ref' => 'Ce modèle global (:kind) n\'existe pas.',
     'conflict' => 'Ce contenu a été modifié par quelqu\'un d\'autre. Rechargez-le avant d\'enregistrer.',
+    'breakpoint' => 'Écran inconnu : utilisez base, md ou lg.',
+    'option' => 'Cette valeur ne fait pas partie des choix proposés.',
 ];

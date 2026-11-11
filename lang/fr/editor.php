@@ -42,6 +42,8 @@ return [
     'column_width' => 'Largeur',
     'inherited' => 'hérité',
     'reset' => 'Réinitialiser',
+    'visibility' => 'Visibilité',
+    'hide_on' => 'Masquer sur :',
     'settings' => 'Réglages',
 
     'breakpoints' => ['base' => 'Mobile', 'md' => 'Tablette', 'lg' => 'Bureau'],

@@ -304,7 +304,13 @@
                                     <div class="flex items-center justify-between gap-2">
                                         <label class="tr-label" x-text="field.label + (field.required ? ' *' : '')"></label>
                                         <span x-show="field.translatable" class="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-500 uppercase" x-text="locale"></span>
+                                        <span x-show="field.responsive" class="ms-auto flex items-center gap-2">
+                                            <button type="button" class="text-xs text-indigo-600 hover:underline"
+                                                    x-show="breakpoint !== 'base' && !isInherited(field)" @click="setValue(field, null)" x-text="t.reset"></button>
+                                            <span class="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-500" x-text="t.breakpoints[breakpoint]"></span>
+                                        </span>
                                     </div>
+                                    <p x-show="isInherited(field)" class="text-xs text-zinc-400" x-text="t.inherited"></p>
 
                                     <template x-if="field.type === 'text' || field.type === 'url'">
                                         <input type="text" class="tr-input" :value="value(field)" :placeholder="placeholder(field) || (field.type === 'url' ? 'https://… /page #ancre' : '')"
@@ -400,6 +406,19 @@
                                     <template x-for="message in fieldErrors(field)" :key="message">
                                         <p class="text-xs text-rose-600" x-text="message"></p>
                                     </template>
+                                </div>
+                            </template>
+
+                            {{-- Visibility per breakpoint --}}
+                            <template x-if="canHide">
+                                <div class="space-y-1.5 border-t border-zinc-100 pt-4">
+                                    <h3 class="tr-heading" x-text="t.visibility"></h3>
+                                    <p class="text-xs text-zinc-500" x-text="t.hide_on"></p>
+                                    <div class="tr-seg">
+                                        <template x-for="bp in breakpoints" :key="bp">
+                                            <button type="button" :aria-pressed="isHidden(bp)" @click="toggleHidden(bp)" x-text="t.breakpoints[bp]"></button>
+                                        </template>
+                                    </div>
                                 </div>
                             </template>
                         </div>

@@ -9,6 +9,7 @@ use Godrade\Trame\Layout\RowLayout;
 use Godrade\Trame\Layout\SectionLayout;
 use Godrade\Trame\Models\Template;
 use Godrade\Trame\Support\Localizer;
+use Godrade\Trame\Support\Tokens;
 use Illuminate\Contracts\View\Factory as ViewFactory;
 
 final class Renderer
@@ -61,11 +62,12 @@ final class Renderer
         }
 
         $classes = SectionLayout::classes($node['settings']);
+        $classes['section'] = Tokens::join($classes['section'], $this->hideClasses($node));
 
         return $this->view->make('trame::layout.section', [
             ...$classes,
             'anchor' => $node['settings']['anchor'] ?: null,
-            'attributes' => $this->attributes($node['id'], 'section'),
+            'attributes' => $this->attributes($node['id'], 'section', $node),
             'rows' => implode('', array_map(fn (array $row) => $this->row($row), $node['rows'])),
         ])->render();
     }
@@ -77,8 +79,8 @@ final class Renderer
         }
 
         return $this->view->make('trame::layout.row', [
-            'classes' => RowLayout::classes($node['settings']),
-            'attributes' => $this->attributes($node['id'], 'row'),
+            'classes' => Tokens::join(RowLayout::classes($node['settings']), $this->hideClasses($node)),
+            'attributes' => $this->attributes($node['id'], 'row', $node),
             'columns' => implode('', array_map(fn (array $column) => $this->column($column), $node['columns'])),
         ])->render();
     }
@@ -86,8 +88,8 @@ final class Renderer
     private function column(array $node): string
     {
         return $this->view->make('trame::layout.column', [
-            'classes' => ColumnLayout::classes($node['settings'], $node['span']),
-            'attributes' => $this->attributes($node['id'], 'column'),
+            'classes' => Tokens::join(ColumnLayout::classes($node['settings'], $node['span']), $this->hideClasses($node)),
+            'attributes' => $this->attributes($node['id'], 'column', $node),
             'blocks' => implode('', array_map(fn (array $block) => $this->block($block), $node['blocks'])),
         ])->render();
     }
@@ -117,9 +119,22 @@ final class Renderer
             'editable' => $this->editable(...),
         ])->render();
 
-        return $this->editing
-            ? '<div '.$this->attributes($node['id'], 'block').' data-trame-type="'.e($node['type']).'">'.$html.'</div>'
-            : $html;
+        if ($this->editing) {
+            return '<div '.$this->attributes($node['id'], 'block', $node).' data-trame-type="'.e($node['type']).'">'.$html.'</div>';
+        }
+
+        $hide = $this->hideClasses($node);
+
+        return $hide === '' ? $html : '<div class="'.$hide.'">'.$html.'</div>';
+    }
+
+    /**
+     * Public output hides the node with responsive classes. The editor keeps it
+     * visible (dimmed via data-trame-hide) so it can still be selected.
+     */
+    private function hideClasses(array $node): string
+    {
+        return $this->editing ? '' : Tokens::hide($node['settings']['hide'] ?? null);
     }
 
     private function global(array $node, string $kind, callable $render): string
@@ -169,8 +184,15 @@ final class Renderer
         return 'data-trame-field="'.$field.'"'.($rich ? ' data-trame-rich' : '');
     }
 
-    private function attributes(string $id, string $node): string
+    private function attributes(string $id, string $kind, array $node = []): string
     {
-        return $this->editing ? 'data-trame-id="'.e($id).'" data-trame-node="'.$node.'"' : '';
+        if (! $this->editing) {
+            return '';
+        }
+
+        $hide = Tokens::hiddenOn($node['settings']['hide'] ?? null);
+
+        return 'data-trame-id="'.e($id).'" data-trame-node="'.$kind.'"'
+            .($hide === [] ? '' : ' data-trame-hide="'.implode(' ', $hide).'"');
     }
 }

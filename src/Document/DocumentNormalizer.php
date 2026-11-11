@@ -10,6 +10,7 @@ use Godrade\Trame\Layout\SectionLayout;
 use Godrade\Trame\Support\Grid;
 use Godrade\Trame\Support\HtmlSanitizer;
 use Godrade\Trame\Support\Localizer;
+use Godrade\Trame\Support\Tokens;
 use Illuminate\Support\Str;
 
 /**
@@ -60,7 +61,7 @@ final class DocumentNormalizer
         return [
             'id' => $this->id($node, 'sec'),
             'type' => 'section',
-            'settings' => Schema::normalize(SectionLayout::schema(), $node['settings'] ?? [], $this->localizer, $this->sanitizer),
+            'settings' => $this->settings(SectionLayout::schema(), $node),
             'rows' => $this->list($node['rows'] ?? [], fn ($row) => $this->row($row)),
         ];
     }
@@ -81,7 +82,7 @@ final class DocumentNormalizer
         return [
             'id' => $this->id($node, 'row'),
             'type' => 'row',
-            'settings' => Schema::normalize(RowLayout::schema(), $node['settings'] ?? [], $this->localizer, $this->sanitizer),
+            'settings' => $this->settings(RowLayout::schema(), $node),
             'columns' => array_slice($columns, 0, RowLayout::MAX_COLUMNS),
         ];
     }
@@ -96,7 +97,7 @@ final class DocumentNormalizer
         return [
             'id' => $this->id($node, 'col'),
             'span' => Grid::normalizeSpan($node['span'] ?? []),
-            'settings' => Schema::normalize(ColumnLayout::schema(), $node['settings'] ?? [], $this->localizer, $this->sanitizer),
+            'settings' => $this->settings(ColumnLayout::schema(), $node),
             'blocks' => $this->list($node['blocks'] ?? [], fn ($block) => $this->block($block)),
         ];
     }
@@ -125,11 +126,32 @@ final class DocumentNormalizer
             $data = $block->migrate($data, $storedVersion);
         }
 
+        $settings = $this->settings([], $node);
+
         return [
             'id' => $this->id($node, 'blk'),
             'type' => $node['type'],
             'v' => $version,
             'data' => Schema::normalize($block->fields(), $data, $this->localizer, $this->sanitizer),
+            ...($settings === [] ? [] : ['settings' => $settings]),
+        ];
+    }
+
+    /**
+     * Schema settings plus "hide" (breakpoints the node is hidden on),
+     * stored only when not empty.
+     *
+     * @param  array<int, \Godrade\Trame\Fields\Field>  $schema
+     * @return array<string, mixed>
+     */
+    private function settings(array $schema, array $node): array
+    {
+        $settings = is_array($node['settings'] ?? null) ? $node['settings'] : [];
+        $hide = Tokens::hiddenOn($settings['hide'] ?? null);
+
+        return [
+            ...Schema::normalize($schema, $settings, $this->localizer, $this->sanitizer),
+            ...($hide === [] ? [] : ['hide' => $hide]),
         ];
     }
 

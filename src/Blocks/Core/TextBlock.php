@@ -24,7 +24,7 @@ final class TextBlock extends Block
     {
         return [
             Field::richText('content')->translatable()->required(),
-            Field::select('align')->options(Tokens::keys(Tokens::ALIGN))->default('start'),
+            Field::select('align')->options(Tokens::keys(Tokens::ALIGN))->default('start')->responsive(),
             Field::color('color')->default('slate-700'),
         ];
     }
@@ -38,7 +38,7 @@ final class TextBlock extends Block
             'html' => $this->sanitizer->sanitize((string) $data['content']),
             'classes' => Tokens::join(
                 'space-y-4 leading-relaxed',
-                Tokens::pick(Tokens::ALIGN, $data['align'], 'start'),
+                Tokens::responsive(Tokens::ALIGN_RESPONSIVE, $data['align'], 'start'),
                 $color['class'],
             ),
             'style' => $color['style'],
