@@ -143,3 +143,30 @@ test('read/writeField only touch the editing locale', () => {
     assert.equal(D.readField(data, field, 'en'), '');
     assert.equal(D.readField({ level: undefined }, { name: 'level', default: 2 }, 'fr'), 2);
 });
+
+test('templates wrap into a document and unwrap back', () => {
+    const block = D.makeBlock(heading, 'fr');
+    const doc = D.wrapTemplate('block', block, layout, 'fr');
+
+    assert.equal(doc.sections[0].rows[0].columns[0].blocks[0].id, block.id);
+    assert.deepEqual(D.unwrapTemplate('block', doc), block);
+    assert.equal(D.templateRootId('block', doc), block.id);
+
+    doc.sections[0].rows[0].columns[0].blocks.push(D.makeBlock(heading, 'fr'));
+    assert.equal(D.unwrapTemplate('block', doc), null, 'two blocks cannot be saved as one block template');
+
+    const row = D.makeRow([6, 6], layout, 'fr');
+    assert.deepEqual(D.unwrapTemplate('row', D.wrapTemplate('row', row, layout, 'fr')), row);
+
+    const section = D.makeSection([12], layout, 'fr');
+    const sectionDoc = D.wrapTemplate('section', section, layout, 'fr');
+    sectionDoc.sections.push(D.makeSection([12], layout, 'fr'));
+    assert.equal(D.unwrapTemplate('section', sectionDoc), null);
+});
+
+test('template errors map onto wrapper paths', () => {
+    assert.deepEqual(D.templateErrors('row', { 'content.columns.0.blocks.1.data.text.fr': ['Required'], name: ['x'] }), {
+        'document.sections.0.rows.0.columns.0.blocks.1.data.text.fr': ['Required'],
+        name: ['x'],
+    });
+});

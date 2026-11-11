@@ -3,6 +3,8 @@
  * rendering) and talks to the editor through postMessage (same origin only):
  *   -> trame:ready | trame:select {id} | trame:action {action, id}
  *      trame:move {id, parentId, index} | trame:key {key, metaKey, ctrlKey, shiftKey}
+ *      trame:drop {payload, parentId, index}   (drag from the editor palette)
+ *      trame:inline {id, field, value}          (in-place text editing)
  *   <- trame:render {html, selected} | trame:select {id, scroll}
  */
 import Sortable from 'sortablejs';
@@ -15,6 +17,8 @@ const COLORS = { section: '#6366f1', row: '#0ea5e9', column: '#10b981', block: '
 let selectedId = null;
 let hovered = null;
 let sortables = [];
+let editing = null; // { el, id, field, rich }
+let pendingRender = null;
 
 /* ------------------------------------------------------------------ chrome */
 
@@ -26,6 +30,9 @@ style.textContent = `
     [data-trame-node="row"]:empty, [data-trame-node="section"] > div:empty { min-height: 4rem; outline: 1px dashed rgba(14, 165, 233, .5); }
     [data-trame-node] a, [data-trame-node] button { cursor: default; }
     .trame-ghost { opacity: .35; }
+    [data-trame-field]:hover { cursor: text; }
+    [data-trame-field][contenteditable]:not([contenteditable="false"]) { outline: 2px solid #f97316 !important; outline-offset: 2px; cursor: text; }
+    #trame-drop { position: absolute; z-index: 2147483001; height: 4px; margin-top: -2px; border-radius: 2px; background: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,.25); pointer-events: none; display: none; }
     .trame-chosen { cursor: grabbing !important; }
     #trame-hover, #trame-selected { position: absolute; pointer-events: none; z-index: 2147483000; border: 2px solid; border-radius: 3px; display: none; box-sizing: border-box; }
     #trame-hover { border-style: dashed; }
@@ -53,7 +60,10 @@ selectedBox.innerHTML = `<div class="trame-bar">
     <button type="button" data-action="delete" title="Delete">✕</button>
 </div>`;
 
-document.body.append(hoverBox, selectedBox);
+const dropLine = document.createElement('div');
+dropLine.id = 'trame-drop';
+
+document.body.append(hoverBox, selectedBox, dropLine);
 
 selectedBox.querySelector('.trame-bar').addEventListener('click', (event) => {
     const button = event.target.closest('button[data-action]');
@@ -259,6 +269,19 @@ document.addEventListener('keydown', (event) => {
     const key = event.key.toLowerCase();
     const mod = event.metaKey || event.ctrlKey;
 
+    if (editing) {
+        if (key === 'escape' || (key === 'enter' && !editing.rich && !event.shiftKey)) {
+            event.preventDefault();
+            editing.el.blur();
+        } else if (mod && key === 's') {
+            event.preventDefault();
+            editing.el.blur();
+            send({ type: 'trame:key', key: event.key, metaKey: event.metaKey, ctrlKey: event.ctrlKey, shiftKey: event.shiftKey });
+        }
+
+        return;
+    }
+
     if ((mod && ['s', 'z', 'y'].includes(key)) || ['delete', 'backspace', 'escape'].includes(key)) {
         event.preventDefault();
         send({ type: 'trame:key', key: event.key, metaKey: event.metaKey, ctrlKey: event.ctrlKey, shiftKey: event.shiftKey });
@@ -269,6 +292,249 @@ window.addEventListener('scroll', redraw, { passive: true });
 window.addEventListener('resize', redraw);
 new ResizeObserver(redraw).observe(document.body);
 
+/* ---------------------------------------------------------- render sync */
+
+function applyRender(message) {
+    const template = document.createElement('template');
+    template.innerHTML = String(message.html ?? '').trim();
+    const next = template.content.querySelector('[data-trame-root]');
+    const current = root();
+
+    if (next && current) {
+        current.replaceWith(next);
+    }
+
+    selectedId = message.selected ?? selectedId;
+    hovered = null;
+    initSortables();
+    redraw();
+}
+
+/* ----------------------------------------------------- in-place editing */
+
+function startEditing(el) {
+    const block = el.closest('[data-trame-id]');
+
+    if (!block || editing?.el === el) {
+        return;
+    }
+
+    const rich = el.hasAttribute('data-trame-rich');
+    editing = { el, id: block.dataset.trameId, field: el.dataset.trameField, rich };
+    selectedId = editing.id;
+    send({ type: 'trame:select', id: selectedId });
+
+    sortables.forEach((sortable) => sortable.option('disabled', true));
+    el.setAttribute('contenteditable', rich ? 'true' : 'plaintext-only');
+    el.focus();
+    redraw();
+}
+
+function editedValue() {
+    if (!editing) {
+        return '';
+    }
+
+    return editing.rich
+        ? editing.el.innerHTML.trim()
+        : editing.el.innerText.replace(/\s+/g, ' ').trim();
+}
+
+document.addEventListener(
+    'dblclick',
+    (event) => {
+        const el = event.target.closest?.('[data-trame-field]');
+
+        if (!el || el.closest('[data-trame-node="global"]')) {
+            return;
+        }
+
+        event.preventDefault();
+        startEditing(el);
+    },
+    true,
+);
+
+document.addEventListener(
+    'input',
+    (event) => {
+        if (editing && editing.el.contains(event.target)) {
+            send({ type: 'trame:inline', id: editing.id, field: editing.field, value: editedValue() });
+            redraw();
+        }
+    },
+    true,
+);
+
+document.addEventListener(
+    'focusout',
+    (event) => {
+        if (!editing || event.target !== editing.el) {
+            return;
+        }
+
+        editing.el.setAttribute('contenteditable', 'false');
+        editing = null;
+        sortables.forEach((sortable) => sortable.option('disabled', false));
+
+        if (pendingRender) {
+            const message = pendingRender;
+            pendingRender = null;
+            applyRender(message);
+        } else {
+            redraw();
+        }
+    },
+    true,
+);
+
+// Rich fields: paste as plain text (the server sanitizer would strip most markup anyway).
+document.addEventListener(
+    'paste',
+    (event) => {
+        if (editing?.rich) {
+            event.preventDefault();
+            document.execCommand('insertText', false, event.clipboardData.getData('text/plain'));
+        }
+    },
+    true,
+);
+
+/* ------------------------------------------- drop from the editor palette */
+
+const TRAME_TYPE = 'application/x-trame';
+
+function draggedLevel(event) {
+    const types = [...(event.dataTransfer?.types ?? [])];
+
+    if (!types.includes(TRAME_TYPE)) {
+        return null;
+    }
+
+    const marker = types.find((type) => type.startsWith(`${TRAME_TYPE}-level-`));
+
+    return marker ? marker.slice(`${TRAME_TYPE}-level-`.length) : null;
+}
+
+const outsideGlobal = (el) => el && !el.closest('[data-trame-node="global"]');
+
+/** Where a node of `level` would land under the pointer: { container, parentId, index, items }. */
+function dropTarget(level, x, y) {
+    const el = document.elementFromPoint(x, y);
+    let container = null;
+    let parentId = null;
+
+    if (level === 'section') {
+        container = root();
+    } else if (level === 'row') {
+        const section = el?.closest('[data-trame-node="section"]');
+        container = outsideGlobal(section) ? section.firstElementChild : null;
+        parentId = section?.dataset.trameId ?? null;
+    } else if (level === 'block') {
+        const column = el?.closest('[data-trame-node="column"]');
+        container = outsideGlobal(column) ? column : null;
+        parentId = column?.dataset.trameId ?? null;
+    }
+
+    if (!container) {
+        return null;
+    }
+
+    const items = [...container.children].filter((child) => child.hasAttribute('data-trame-id'));
+    const index = items.filter((item) => {
+        const rect = item.getBoundingClientRect();
+
+        return rect.top + rect.height / 2 < y;
+    }).length;
+
+    return { container, parentId, index, items };
+}
+
+function showDropLine(target) {
+    if (!target) {
+        dropLine.style.display = 'none';
+
+        return;
+    }
+
+    const box = target.container.getBoundingClientRect();
+    const before = target.items[target.index];
+    const after = target.items[target.index - 1];
+    const top = before
+        ? before.getBoundingClientRect().top
+        : after
+          ? after.getBoundingClientRect().bottom
+          : box.top + Math.min(box.height / 2, 16);
+
+    Object.assign(dropLine.style, {
+        display: 'block',
+        top: `${top + window.scrollY}px`,
+        left: `${box.left + window.scrollX}px`,
+        width: `${Math.max(box.width, 24)}px`,
+    });
+}
+
+// Capture on window so SortableJS never sees foreign drags.
+window.addEventListener(
+    'dragover',
+    (event) => {
+        const level = draggedLevel(event);
+
+        if (!level) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        const target = dropTarget(level, event.clientX, event.clientY);
+        event.dataTransfer.dropEffect = target ? 'copy' : 'none';
+        showDropLine(target);
+    },
+    true,
+);
+
+window.addEventListener(
+    'drop',
+    (event) => {
+        const level = draggedLevel(event);
+
+        if (!level) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        showDropLine(null);
+
+        const target = dropTarget(level, event.clientX, event.clientY);
+        let payload = null;
+
+        try {
+            payload = JSON.parse(event.dataTransfer.getData(TRAME_TYPE));
+        } catch {
+            return;
+        }
+
+        if (target && payload) {
+            send({ type: 'trame:drop', payload, parentId: target.parentId, index: target.index });
+        }
+    },
+    true,
+);
+
+window.addEventListener(
+    'dragleave',
+    (event) => {
+        if (draggedLevel(event) && !event.relatedTarget) {
+            showDropLine(null);
+        }
+    },
+    true,
+);
+
+/* ----------------------------------------------------------------- inbox */
+
 window.addEventListener('message', (event) => {
     if (event.origin !== origin || event.source !== window.parent) {
         return;
@@ -277,19 +543,12 @@ window.addEventListener('message', (event) => {
     const message = event.data ?? {};
 
     if (message.type === 'trame:render') {
-        const template = document.createElement('template');
-        template.innerHTML = String(message.html ?? '').trim();
-        const next = template.content.querySelector('[data-trame-root]');
-        const current = root();
-
-        if (next && current) {
-            current.replaceWith(next);
+        // Never replace the DOM under the caret: apply once editing ends.
+        if (editing) {
+            pendingRender = message;
+        } else {
+            applyRender(message);
         }
-
-        selectedId = message.selected ?? selectedId;
-        hovered = null;
-        initSortables();
-        redraw();
     }
 
     if (message.type === 'trame:select') {
@@ -299,6 +558,10 @@ window.addEventListener('message', (event) => {
         if (message.scroll) {
             find(selectedId)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
         }
+    }
+
+    if (message.type === 'trame:drag-end') {
+        showDropLine(null);
     }
 });
 

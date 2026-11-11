@@ -1,4 +1,5 @@
-{{-- Variables: resolved fields ($title, $color), with() values ($textColor), $editing, $locale --}}
-<div class="{{ $textColor['class'] }}" @if($textColor['style']) style="{{ $textColor['style'] }}" @endif>
+{{-- Variables: resolved fields ($title, $color), with() values ($textColor), $editing, $locale.
+     $editable('field') makes an element editable in place in the editor canvas. --}}
+<div class="{{ $textColor['class'] }}" @if($textColor['style']) style="{{ $textColor['style'] }}" @endif {!! $editable('title') !!}>
     {{ $title }}
 </div>

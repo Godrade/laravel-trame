@@ -90,5 +90,14 @@ return [
     'max_columns' => 'Une ligne ne peut pas dépasser 12 colonnes.',
     'errors_count' => ':count erreur(s)',
 
+    'edit' => 'Modifier',
+    'edit_template' => 'Modifier le modèle',
+    'save_template' => 'Enregistrer le modèle',
+    'back_to_page' => 'Retour à la page',
+    'editing_template' => 'Édition du modèle « :name »',
+    'template_single' => 'Un modèle doit contenir exactement une section, une ligne ou un bloc, comme à sa création.',
+    'discard_changes' => 'Abandonner les modifications non enregistrées du modèle ?',
+    'inline_help' => 'Glisse un élément dans l’aperçu pour le placer. Double-clic sur un texte pour le modifier sur place.',
+
     'categories' => ['content' => 'Contenu', 'media' => 'Médias', 'layout' => 'Mise en page'],
 ];

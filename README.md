@@ -54,6 +54,9 @@ compile or publish on the host. The canvas is an iframe rendering the real page 
 build (`trame.editor.preview.vite`), so what you see is what is published.
 
 - Click to select, drag & drop sections, rows, columns and blocks directly in the canvas
+- Drag blocks, layouts and templates from the palette straight into the canvas
+- Double-click a text to edit it in place (plain text, or rich text with ⌘B / ⌘I)
+- Edit a global template from any page that uses it; changes apply everywhere
 - Settings panel generated from block schemas, live validation
 - Mobile / tablet / desktop preview, per-breakpoint column widths
 - Per-locale editing of translatable fields, fallback shown as placeholder
@@ -61,6 +64,18 @@ build (`trame.editor.preview.vite`), so what you see is what is published.
 - Media library, reusable and global templates
 
 If you override the preview layout, keep `{!! $bridge ?? '' !!}` before `</body>`.
+
+### In-place editing in your own blocks
+
+Block views receive an `$editable` helper. Put it on the element that displays a text field:
+
+```blade
+<h3 class="…" {!! $editable('title') !!}>{{ $title }}</h3>
+<div class="…" {!! $editable('body', rich: true) !!}>{!! $body !!}</div>
+```
+
+It renders nothing outside the editor. Use it only on an element that displays the field as-is
+(no extra markup or formatting inside), otherwise the edited text would include it.
 
 ### Developing the editor
 

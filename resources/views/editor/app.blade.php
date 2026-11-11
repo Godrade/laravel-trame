@@ -65,11 +65,28 @@
                 <button type="button" x-show="errorCount" x-cloak class="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700"
                         @click="panel = 'structure'" x-text="t.errors_count.replace(':count', errorCount)"></button>
                 <span class="hidden text-xs text-zinc-500 lg:inline" x-text="status"></span>
-                <button type="button" class="tr-btn-ghost text-xs" x-show="publishedAt" x-cloak @click="unpublish()" x-text="t.unpublish"></button>
-                <button type="button" class="tr-btn-outline" :disabled="saving || !dirty" @click="save()" x-text="saving ? t.saving : t.save"></button>
-                <button type="button" class="tr-btn-primary" :disabled="publishing || saving || (!dirty && publishedAt && !hasUnpublished)" @click="publish()" x-text="t.publish"></button>
+                <template x-if="!templateMode">
+                    <div class="flex items-center gap-2">
+                        <button type="button" class="tr-btn-ghost text-xs" x-show="publishedAt" @click="unpublish()" x-text="t.unpublish"></button>
+                        <button type="button" class="tr-btn-outline" :disabled="saving || !dirty" @click="save()" x-text="saving ? t.saving : t.save"></button>
+                        <button type="button" class="tr-btn-primary" :disabled="publishing || saving || (!dirty && publishedAt && !hasUnpublished)" @click="publish()" x-text="t.publish"></button>
+                    </div>
+                </template>
+                <template x-if="templateMode">
+                    <div class="flex items-center gap-2">
+                        <button type="button" class="tr-btn-outline" @click="leaveTemplate()" x-text="t.back_to_page"></button>
+                        <button type="button" class="tr-btn-primary" :disabled="saving || !dirty" @click="saveTemplateContent()" x-text="saving ? t.saving : t.save_template"></button>
+                    </div>
+                </template>
             </div>
         </header>
+
+        {{-- Template edit mode banner --}}
+        <div x-show="templateMode" x-cloak class="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-4 py-1.5 text-sm text-amber-900">
+            <span class="text-amber-500">◆</span>
+            <span x-text="t.editing_template.replace(':name', templateMode?.name ?? '')"></span>
+            <span x-show="templateMode?.is_global" class="text-xs text-amber-700" x-text="'· ' + t.template_global_help"></span>
+        </div>
 
         <div class="flex min-h-0 flex-1">
 
@@ -93,7 +110,8 @@
                             <div class="grid grid-cols-3 gap-2">
                                 <template x-for="preset in presets" :key="preset.key">
                                     <button type="button" @click="addSection(preset, selectedId)" :title="preset.spans.join(' / ')"
-                                            class="flex h-10 gap-0.5 rounded-md border border-zinc-200 p-1.5 transition hover:border-indigo-400 hover:bg-indigo-50">
+                                            draggable="true" @dragstart="dragStart($event, { kind: 'section', spans: preset.spans })" @dragend="dragEnd()"
+                                            class="flex h-10 cursor-grab gap-0.5 rounded-md border border-zinc-200 p-1.5 transition hover:border-indigo-400 hover:bg-indigo-50">
                                         <template x-for="(span, i) in preset.spans" :key="i">
                                             <span class="rounded-sm bg-zinc-300" :style="`flex-grow: ${span}`"></span>
                                         </template>
@@ -108,7 +126,8 @@
                                 <div class="grid grid-cols-2 gap-2">
                                     <template x-for="block in defs.blocks.filter(b => b.category === category)" :key="block.type">
                                         <button type="button" @click="addBlock(block.type)"
-                                                class="flex items-center gap-2 rounded-md border border-zinc-200 px-2 py-2 text-start text-sm transition hover:border-indigo-400 hover:bg-indigo-50">
+                                                draggable="true" @dragstart="dragStart($event, { kind: 'block', type: block.type })" @dragend="dragEnd()"
+                                                class="flex cursor-grab items-center gap-2 rounded-md border border-zinc-200 px-2 py-2 text-start text-sm transition hover:border-indigo-400 hover:bg-indigo-50">
                                             <span class="flex size-6 shrink-0 items-center justify-center rounded bg-zinc-100 text-xs font-semibold text-zinc-600 uppercase" x-text="block.label.slice(0, 1)"></span>
                                             <span class="truncate" x-text="block.label"></span>
                                         </button>
@@ -118,6 +137,7 @@
                         </template>
 
                         <p class="text-xs leading-relaxed text-zinc-500" x-text="t.add_block_help"></p>
+                        <p class="text-xs leading-relaxed text-zinc-500" x-text="t.inline_help"></p>
                     </div>
 
                     {{-- Structure --}}
@@ -143,10 +163,12 @@
                             <section class="space-y-1.5" x-show="templatesOf(kind).length">
                                 <h3 class="tr-heading" x-text="t[kind]"></h3>
                                 <template x-for="template in templatesOf(kind)" :key="template.id">
-                                    <div class="group flex items-center gap-2 rounded-md border border-zinc-200 px-2 py-1.5">
+                                    <div class="group flex cursor-grab items-center gap-2 rounded-md border border-zinc-200 px-2 py-1.5"
+                                         draggable="true" @dragstart="dragStart($event, { kind: 'template', id: template.id })" @dragend="dragEnd()">
                                         <span x-show="template.is_global" class="text-amber-500" :title="t.global">◆</span>
                                         <span class="min-w-0 flex-1 truncate text-sm" x-text="template.name"></span>
-                                        <button type="button" class="tr-btn-ghost px-1.5 py-0.5 text-xs" @click="insertTemplate(template)" x-text="t.insert"></button>
+                                        <button type="button" class="tr-btn-ghost px-1.5 py-0.5 text-xs" @click="insertTemplate(template)" x-text="t.insert" x-show="!templateMode"></button>
+                                        <button type="button" class="tr-btn-ghost px-1.5 py-0.5 text-xs" @click="editTemplate(template)" x-text="t.edit" x-show="!templateMode"></button>
                                         <button type="button" class="tr-icon-btn size-6 opacity-0 group-hover:opacity-100" @click="deleteTemplate(template)" :title="t.delete">✕</button>
                                     </div>
                                 </template>
@@ -221,6 +243,7 @@
                                 <div class="space-y-3">
                                     <p class="text-sm font-medium" x-text="templateName(selected.node.ref)"></p>
                                     <p class="text-xs leading-relaxed text-zinc-500" x-text="t.global_help"></p>
+                                    <button type="button" class="tr-btn-primary w-full" x-show="!templateMode" @click="editTemplate(templates.find(t => t.id === selected.node.ref))" x-text="t.edit_template"></button>
                                     <button type="button" class="tr-btn-outline w-full" @click="detach(selectedId)" x-text="t.detach"></button>
                                 </div>
                             </template>

@@ -384,3 +384,77 @@ export function stripTags(html) {
         .replace(/\s+/g, ' ')
         .trim();
 }
+
+/* ------------------------------------------------------------- templates */
+
+/**
+ * A template holds a single section, row or block. To edit it with the
+ * regular editor it is wrapped into a document (section > row > column as
+ * needed); unwrapTemplate() takes it back out.
+ */
+export function wrapTemplate(kind, content, layout, fallback) {
+    const node = clone(content);
+
+    if (kind === 'section') {
+        return { sections: [node] };
+    }
+
+    const section = makeSection([12], layout, fallback);
+
+    if (kind === 'row') {
+        section.rows = [node];
+    } else {
+        section.rows[0].columns[0].blocks = [node];
+    }
+
+    return { sections: [section] };
+}
+
+/** The template node, or null when the wrapper no longer holds exactly one. */
+export function unwrapTemplate(kind, doc) {
+    const sections = doc?.sections ?? [];
+
+    if (sections.length !== 1) {
+        return null;
+    }
+
+    if (kind === 'section') {
+        return sections[0];
+    }
+
+    const rows = sections[0].rows ?? [];
+
+    if (rows.length !== 1) {
+        return null;
+    }
+
+    if (kind === 'row') {
+        return rows[0];
+    }
+
+    const columns = rows[0].columns ?? [];
+    const blocks = columns.length === 1 ? columns[0].blocks ?? [] : [];
+
+    return blocks.length === 1 ? blocks[0] : null;
+}
+
+export function templateRootId(kind, doc) {
+    return unwrapTemplate(kind, doc)?.id ?? null;
+}
+
+const TEMPLATE_PATHS = {
+    section: 'document.sections.0',
+    row: 'document.sections.0.rows.0',
+    block: 'document.sections.0.rows.0.columns.0.blocks.0',
+};
+
+/** Server errors on a template ("content.…") mapped onto the wrapper document paths. */
+export function templateErrors(kind, errors) {
+    const out = {};
+
+    for (const [key, messages] of Object.entries(errors ?? {})) {
+        out[key === 'content' || key.startsWith('content.') ? TEMPLATE_PATHS[kind] + key.slice('content'.length) : key] = messages;
+    }
+
+    return out;
+}

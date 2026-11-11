@@ -90,5 +90,14 @@ return [
     'max_columns' => 'A row cannot have more than 12 columns.',
     'errors_count' => ':count error(s)',
 
+    'edit' => 'Edit',
+    'edit_template' => 'Edit template',
+    'save_template' => 'Save template',
+    'back_to_page' => 'Back to page',
+    'editing_template' => 'Editing template ":name"',
+    'template_single' => 'A template must contain exactly one section, row or block, as when it was created.',
+    'discard_changes' => 'Discard unsaved template changes?',
+    'inline_help' => 'Drag an item into the preview to place it. Double-click a text to edit it in place.',
+
     'categories' => ['content' => 'Content', 'media' => 'Media', 'layout' => 'Layout'],
 ];

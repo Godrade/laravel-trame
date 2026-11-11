@@ -9,6 +9,9 @@ let index = new Map();
 let previewTimer = null;
 let previewSeq = 0;
 let toastTimer = null;
+let pageState = null; // page document stashed while a template is being edited
+
+const TRAME_TYPE = 'application/x-trame';
 
 const FRAME_WIDTHS = { base: 390, md: 820 };
 
@@ -47,6 +50,7 @@ export default function editor() {
         mediaCache: {},
         media: { open: false, field: null, items: [], page: 1, total: 0, loading: false, uploading: false },
         templateDialog: { open: false, nodeId: null, name: '', global: false },
+        templateMode: null, // { id, name, kind, is_global } while editing a template
         toast: null,
 
         frameReady: false,
@@ -82,7 +86,7 @@ export default function editor() {
 
             window.addEventListener('message', (event) => this.onFrameMessage(event));
             window.addEventListener('beforeunload', (event) => {
-                if (this.dirty) {
+                if (this.dirty || (pageState && this.snapshot() !== pageState.savedSnapshot)) {
                     event.preventDefault();
                     event.returnValue = '';
                 }
@@ -248,6 +252,12 @@ export default function editor() {
                     break;
                 case 'trame:key':
                     this.onKey(message, true);
+                    break;
+                case 'trame:drop':
+                    this.dropNode(message.payload, message.parentId, message.index);
+                    break;
+                case 'trame:inline':
+                    this.inlineEdit(message.id, message.field, message.value);
                     break;
             }
         },
@@ -505,6 +515,186 @@ export default function editor() {
             };
 
             actions[name]?.();
+        },
+
+        /* ------------------------------------------------- palette drag & drop */
+
+        /** Palette/template items are draggable into the canvas (native DnD crosses the iframe). */
+        dragStart(event, payload) {
+            const level = payload.kind === 'template'
+                ? this.templates.find((t) => t.id === payload.id)?.kind
+                : payload.kind;
+
+            if (!level) {
+                return;
+            }
+
+            event.dataTransfer.effectAllowed = 'copy';
+            event.dataTransfer.setData(TRAME_TYPE, JSON.stringify(payload));
+            event.dataTransfer.setData(`${TRAME_TYPE}-level-${level}`, '1');
+        },
+
+        dragEnd() {
+            this.postFrame({ type: 'trame:drag-end' });
+        },
+
+        /** Build the node a palette payload stands for. */
+        nodeFromPayload(payload) {
+            if (payload?.kind === 'block' && this.blockDefs[payload.type]) {
+                return { level: 'block', node: D.makeBlock(this.blockDefs[payload.type], this.fallback) };
+            }
+
+            if (payload?.kind === 'section' && Array.isArray(payload.spans)) {
+                return { level: 'section', node: D.makeSection(payload.spans, this.defs.layout, this.fallback) };
+            }
+
+            const template = payload?.kind === 'template' ? this.templates.find((t) => t.id === payload.id) : null;
+
+            if (template) {
+                return {
+                    level: template.kind,
+                    node: template.is_global ? D.makeGlobal(template.kind, template.id) : D.reId(template.content),
+                };
+            }
+
+            return null;
+        },
+
+        dropNode(payload, parentId, position) {
+            const built = this.nodeFromPayload(payload);
+
+            if (!built) {
+                return;
+            }
+
+            const ok = this.mutate(() => {
+                const list = D.targetList(this.doc, index, built.level, parentId ?? null);
+
+                if (!list) {
+                    return false;
+                }
+
+                list.splice(Math.max(0, Math.min(position, list.length)), 0, built.node);
+
+                return true;
+            });
+
+            if (!ok) {
+                this.history.pop();
+
+                return;
+            }
+
+            const first = built.level === 'section' && built.node.rows ? built.node.rows[0]?.columns?.[0]?.id : null;
+            this.select(first ?? built.node.id);
+        },
+
+        /* ----------------------------------------------------- in-place edits */
+
+        inlineEdit(id, name, value) {
+            const entry = index.get(id);
+            const field = entry?.kind === 'block' ? this.blockDefs[entry.node.type]?.fields.find((f) => f.name === name) : null;
+
+            if (!field) {
+                return;
+            }
+
+            if (!D.isObject(entry.node.data)) {
+                entry.node.data = {};
+            }
+
+            this.mutate(() => D.writeField(entry.node.data, field, this.locale, value), `${id}:${name}:${this.locale}`);
+        },
+
+        /* --------------------------------------------------------- template mode */
+
+        /** Edit a template's content with the full editor, the page being stashed meanwhile. */
+        editTemplate(template) {
+            if (!template || this.templateMode) {
+                return;
+            }
+
+            pageState = {
+                doc: this.doc,
+                history: this.history,
+                future: this.future,
+                savedSnapshot: this.savedSnapshot,
+                selectedId: this.selectedId,
+                errors: this.errors,
+            };
+
+            this.templateMode = { id: template.id, name: template.name, kind: template.kind, is_global: template.is_global };
+            this.doc = D.wrapTemplate(template.kind, template.content, this.defs.layout, this.fallback);
+            this.history = [];
+            this.future = [];
+            this.errors = {};
+            this.savedSnapshot = this.snapshot();
+            this.lastCoalesce = null;
+            this.reindex();
+            this.dirty = false;
+            this.select(D.templateRootId(template.kind, this.doc));
+            this.refreshPreview();
+        },
+
+        async saveTemplateContent() {
+            const mode = this.templateMode;
+            const content = D.unwrapTemplate(mode.kind, this.doc);
+
+            if (!content) {
+                return this.notify(this.t.template_single, 'error');
+            }
+
+            this.saving = true;
+            const sent = this.snapshot();
+
+            try {
+                const saved = await api.put(cfg.endpoints.template.replace('__ID__', mode.id), {
+                    name: mode.name,
+                    is_global: mode.is_global,
+                    content,
+                });
+
+                this.templates = this.templates.map((t) => (t.id === saved.id ? saved : t));
+                this.savedSnapshot = sent;
+                this.dirty = this.snapshot() !== sent;
+                this.errors = {};
+                this.notify(this.t.template_saved, 'success');
+
+                return true;
+            } catch (error) {
+                if (error.status === 422 && error.payload?.errors) {
+                    this.errors = D.templateErrors(mode.kind, error.payload.errors);
+                    this.notify(this.t.validation_failed, 'error');
+                } else {
+                    this.fail(error);
+                }
+
+                return false;
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        leaveTemplate() {
+            if (!this.templateMode || (this.dirty && !window.confirm(this.t.discard_changes))) {
+                return;
+            }
+
+            Object.assign(this, {
+                doc: pageState.doc,
+                history: pageState.history,
+                future: pageState.future,
+                savedSnapshot: pageState.savedSnapshot,
+                errors: pageState.errors,
+                templateMode: null,
+                lastCoalesce: null,
+            });
+
+            this.reindex();
+            this.dirty = this.snapshot() !== this.savedSnapshot;
+            this.select(pageState.selectedId);
+            pageState = null;
+            this.refreshPreview();
         },
 
         /* ---------------------------------------------------------------- fields */
@@ -814,6 +1004,10 @@ export default function editor() {
         /* --------------------------------------------------------- save/publish */
 
         get status() {
+            if (this.templateMode) {
+                return this.saving ? this.t.saving : this.dirty ? this.t.unsaved : '';
+            }
+
             if (this.saving) {
                 return this.t.saving;
             }
@@ -910,7 +1104,7 @@ export default function editor() {
 
             if (mod && key === 's') {
                 event.preventDefault?.();
-                this.save();
+                this.templateMode ? this.saveTemplateContent() : this.save();
             } else if (mod && key === 'z' && !typing) {
                 event.preventDefault?.();
                 event.shiftKey ? this.redo() : this.undo();

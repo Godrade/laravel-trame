@@ -1,1 +1,1 @@
-<{{ $tag }} class="{{ $classes }}" @if($style) style="{{ $style }}" @endif>{{ $text }}</{{ $tag }}>
+<{{ $tag }} class="{{ $classes }}" @if($style) style="{{ $style }}" @endif {!! $editable('text') !!}>{{ $text }}</{{ $tag }}>

@@ -13,7 +13,7 @@ it('renders the grid and blocks in the requested locale', function () {
     ), 'en');
 
     expect($html)
-        ->toContain('<h1 class="font-bold tracking-tight text-3xl text-start text-slate-900">Hello</h1>')
+        ->toMatch('/<h1 class="font-bold tracking-tight text-3xl text-start text-slate-900"\s*>Hello<\/h1>/')
         ->toContain('grid grid-cols-12 gap-x-3 gap-y-6 md:gap-x-6')
         ->toContain('col-span-12 md:col-span-6')
         ->toContain('<blockquote>Citation</blockquote>')
@@ -33,7 +33,10 @@ it('hides blocks with missing required translations in hide mode', function () {
 it('adds editing attributes only in editing mode', function () {
     expect((string) Trame::render(trameDoc([heading(['fr' => 'X'])]), 'fr', editing: true))
         ->toContain('data-trame-node="section"')
-        ->toContain('data-trame-type="heading"');
+        ->toContain('data-trame-type="heading"')
+        ->toContain('data-trame-field="text"');
+
+    expect((string) Trame::render(trameDoc([heading(['fr' => 'X'])]), 'fr'))->not->toContain('data-trame-field');
 });
 
 it('escapes plain text fields', function () {

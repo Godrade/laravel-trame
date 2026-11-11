@@ -114,6 +114,7 @@ final class Renderer
             ...$block->with($data),
             'editing' => $this->editing,
             'locale' => $this->locale,
+            'editable' => $this->editable(...),
         ])->render();
 
         return $this->editing
@@ -151,6 +152,21 @@ final class Renderer
         return $this->editing
             ? '<div data-trame-id="'.e($node['id']).'" data-trame-node="global" data-trame-ref="'.$ref.'">'.$html.'</div>'
             : $html;
+    }
+
+    /**
+     * Marks an element as editable in place in the editor canvas:
+     *   <h2 {!! $editable('text') !!}>{{ $text }}</h2>
+     *   <div {!! $editable('content', rich: true) !!}>{!! $html !!}</div>
+     * Renders nothing outside the editor.
+     */
+    public function editable(string $field, bool $rich = false): string
+    {
+        if (! $this->editing || ! preg_match('/^[a-z][a-z0-9_]*$/', $field)) {
+            return '';
+        }
+
+        return 'data-trame-field="'.$field.'"'.($rich ? ' data-trame-rich' : '');
     }
 
     private function attributes(string $id, string $node): string
