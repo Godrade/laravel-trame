@@ -5,6 +5,7 @@ namespace Godrade\Trame\Document;
 use Godrade\Trame\Blocks\BlockRegistry;
 use Godrade\Trame\Fields\Schema;
 use Godrade\Trame\Layout\BlockLayout;
+use Godrade\Trame\Layout\Box;
 use Godrade\Trame\Layout\ColumnLayout;
 use Godrade\Trame\Layout\RowLayout;
 use Godrade\Trame\Layout\SectionLayout;
@@ -90,6 +91,7 @@ final class Renderer
     {
         return $this->view->make('trame::layout.column', [
             'classes' => Tokens::join(ColumnLayout::classes($node['settings'], $node['span']), $this->hideClasses($node)),
+            'style' => Box::classes($node['settings'])['style'],
             'attributes' => $this->attributes($node['id'], 'column', $node),
             'blocks' => implode('', array_map(fn (array $block) => $this->block($block), $node['blocks'])),
         ])->render();
@@ -112,23 +114,37 @@ final class Renderer
             return '';
         }
 
+        $settings = $node['settings'] ?? [];
+        $box = Box::classes($settings);
+        // A block declaring $box applies the appearance to its own root element (e.g. a card,
+        // so its image follows the rounded corners); other blocks get it on the wrapper.
+        $ownsBox = $block::$box;
+
         $html = $this->view->make($block->view(), [
             ...$data,
             ...$block->with($data),
+            'box' => $box,
             'editing' => $this->editing,
             'locale' => $this->locale,
             'editable' => $this->editable(...),
         ])->render();
 
-        // Wrapper only when needed: block margins, and hide classes in public output.
-        $classes = Tokens::join(BlockLayout::classes($node['settings'] ?? []), $this->hideClasses($node));
-        $class = $classes === '' ? '' : ' class="'.$classes.'"';
+        // Wrapper only when needed: margins, appearance, and hide classes in public output.
+        $classes = Tokens::join(
+            // A block owning its box fills the column height (cards of a row end level), wrapper or not.
+            $ownsBox && ($this->editing || BlockLayout::classes($settings) !== '' || $this->hideClasses($node) !== '') ? 'flex flex-1 flex-col' : '',
+            BlockLayout::classes($settings),
+            $ownsBox ? '' : $box['class'],
+            $this->hideClasses($node),
+        );
+        $style = $ownsBox ? '' : $box['style'];
+        $attributes = ($classes === '' ? '' : ' class="'.$classes.'"').($style === '' ? '' : ' style="'.e($style).'"');
 
         if ($this->editing) {
-            return '<div'.$class.' '.$this->attributes($node['id'], 'block', $node).' data-trame-type="'.e($node['type']).'">'.$html.'</div>';
+            return '<div'.$attributes.' '.$this->attributes($node['id'], 'block', $node).' data-trame-type="'.e($node['type']).'">'.$html.'</div>';
         }
 
-        return $classes === '' ? $html : '<div'.$class.'>'.$html.'</div>';
+        return $attributes === '' ? $html : '<div'.$attributes.'>'.$html.'</div>';
     }
 
     /**

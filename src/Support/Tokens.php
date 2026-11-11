@@ -85,9 +85,9 @@ final class Tokens
      */
     public const GAP = [
         'none' => 'gap-0',
-        'sm' => 'gap-x-2 gap-y-4 md:gap-x-4',
-        'md' => 'gap-x-3 gap-y-6 md:gap-x-6',
-        'lg' => 'gap-x-4 gap-y-10 md:gap-x-10',
+        'sm' => 'gap-x-2 gap-y-6 md:gap-x-4',
+        'md' => 'gap-x-3 gap-y-10 md:gap-x-6',
+        'lg' => 'gap-x-4 gap-y-14 md:gap-x-10',
     ];
 
     public const VALIGN = ['start' => 'justify-start', 'center' => 'justify-center', 'end' => 'justify-end'];
@@ -100,7 +100,20 @@ final class Tokens
      * Tailwind's preflight resets lists and headings: this restores them without
      * the typography plugin, in the host's font and colour.
      */
-    public const PROSE = 'text-pretty leading-7 [&>*+*]:mt-4 [&_h2]:mt-8 [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:leading-tight [&_h3]:mt-6 [&_h3]:text-xl [&_h3]:font-semibold [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:ps-6 [&_ol]:ps-6 [&_li+li]:mt-1 [&_li::marker]:opacity-60 [&_a]:underline [&_a]:decoration-current/40 [&_a]:underline-offset-4 [&_a:hover]:decoration-current [&_strong]:font-semibold [&_blockquote]:border-s-2 [&_blockquote]:border-current/20 [&_blockquote]:ps-4';
+    public const PROSE = 'text-pretty [&>*+*]:mt-4 [&_h2]:mt-8 [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:leading-tight [&_h3]:mt-6 [&_h3]:text-xl [&_h3]:font-semibold [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:ps-6 [&_ol]:ps-6 [&_li+li]:mt-1 [&_li::marker]:opacity-60 [&_a]:underline [&_a]:decoration-current/40 [&_a]:underline-offset-4 [&_a:hover]:decoration-current [&_strong]:font-semibold [&_blockquote]:border-s-2 [&_blockquote]:border-current/20 [&_blockquote]:ps-4';
+
+    /**
+     * Positions a width-limited element (readable text) according to its alignment,
+     * so a centred paragraph is also a centred column.
+     */
+    public const MEASURE_ALIGN_RESPONSIVE = [
+        'base' => ['start' => 'ms-0 me-auto', 'center' => 'mx-auto', 'end' => 'ms-auto me-0'],
+        'md' => ['start' => 'md:ms-0 md:me-auto', 'center' => 'md:mx-auto', 'end' => 'md:ms-auto md:me-0'],
+        'lg' => ['start' => 'lg:ms-0 lg:me-auto', 'center' => 'lg:mx-auto', 'end' => 'lg:ms-auto lg:me-0'],
+    ];
+
+    /** Surface tinted with the current text colour: a quiet panel on any background. */
+    public const SURFACE = 'bg-current/5';
 
     /** Hairline in the current text colour: works on light and dark sections. */
     public const RULE = 'border-current/20';

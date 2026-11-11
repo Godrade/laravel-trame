@@ -19,11 +19,11 @@ final class CalloutBlock extends Block
 
     public static string $category = 'content';
 
-    /** Tone => side rule colour (literal classes). */
+    /** Tone => [side rule, icon colour] (literal classes). The icon tells the kind of note. */
     public const TONES = [
-        'info' => 'border-current/40',
-        'success' => 'border-emerald-600',
-        'warning' => 'border-amber-500',
+        'info' => ['border-current/40', 'text-current/60'],
+        'success' => ['border-emerald-600', 'text-emerald-600'],
+        'warning' => ['border-amber-500', 'text-amber-600'],
     ];
 
     public function __construct(private readonly HtmlSanitizer $sanitizer) {}
@@ -46,8 +46,10 @@ final class CalloutBlock extends Block
     {
         return [
             'html' => $this->sanitizer->sanitize((string) $data['content']),
-            'classes' => Tokens::join('border-s-4 bg-current/5 px-5 py-4', self::TONES[$data['tone']] ?? self::TONES['info']),
-            'prose' => Tokens::PROSE,
+            'tone' => isset(self::TONES[$data['tone']]) ? $data['tone'] : 'info',
+            'classes' => Tokens::join('flex gap-3 border-s-4 bg-current/5 px-5 py-4', (self::TONES[$data['tone']] ?? self::TONES['info'])[0]),
+            'icon' => Tokens::join('mt-1 size-5 shrink-0', (self::TONES[$data['tone']] ?? self::TONES['info'])[1]),
+            'prose' => Tokens::join('leading-7', Tokens::PROSE),
         ];
     }
 

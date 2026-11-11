@@ -12,4 +12,5 @@ return [
     'callout' => 'Encadré',
     'gallery' => 'Galerie',
     'gallery_placeholder' => 'Aucune image dans la galerie',
+    'card' => 'Carte',
 ];

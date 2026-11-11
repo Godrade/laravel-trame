@@ -3,6 +3,7 @@
 namespace Godrade\Trame\Blocks;
 
 use Godrade\Trame\Blocks\Core\ButtonBlock;
+use Godrade\Trame\Blocks\Core\CardBlock;
 use Godrade\Trame\Blocks\Core\CalloutBlock;
 use Godrade\Trame\Blocks\Core\GalleryBlock;
 use Godrade\Trame\Blocks\Core\HeadingBlock;
@@ -24,6 +25,7 @@ final class BlockRegistry
         // Palette order within each category.
         HeadingBlock::class,
         TextBlock::class,
+        CardBlock::class,
         QuoteBlock::class,
         CalloutBlock::class,
         QuestionBlock::class,

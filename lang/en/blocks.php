@@ -12,4 +12,5 @@ return [
     'callout' => 'Callout',
     'gallery' => 'Gallery',
     'gallery_placeholder' => 'No image in the gallery',
+    'card' => 'Card',
 ];

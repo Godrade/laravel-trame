@@ -40,6 +40,9 @@ final class Field
 
     private ?string $help = null;
 
+    /** Heading shown above this field in the settings panel (first field of a group). */
+    private ?string $group = null;
+
     /** @var array<int, Field> Item sub-fields (repeater only). */
     private array $fields = [];
 
@@ -228,6 +231,13 @@ final class Field
     public function max(int|float $max): self
     {
         $this->max = $max;
+
+        return $this;
+    }
+
+    public function group(string $label): self
+    {
+        $this->group = $label;
 
         return $this;
     }
@@ -511,6 +521,7 @@ final class Field
             'min' => $this->min,
             'max' => $this->type === 'repeater' ? ($this->max ?? self::REPEATER_MAX) : $this->max,
             'help' => $this->help,
+            'group' => $this->group,
         ], fn ($value) => $value !== null);
     }
 

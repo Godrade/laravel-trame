@@ -715,7 +715,8 @@ export default function editor() {
 
         /** Settings shared by every block (margins), stored in node.settings rather than node.data. */
         get blockLayoutFields() {
-            return (this._blockLayoutFields ??= (this.defs?.layout.block ?? []).map((field, i) => ({ ...field, scope: 'settings', group: i === 0 ? this.t.spacing : null })));
+            // Group headings (Spacing, Appearance) come from the server definitions.
+            return (this._blockLayoutFields ??= (this.defs?.layout.block ?? []).map((field) => ({ ...field, scope: 'settings' })));
         },
 
         scopeOf(field) {

@@ -40,7 +40,9 @@ it('renders button variants with the theme accent unless a colour is chosen', fu
 
     expect($button([]))->toContain('bg-(--trame-accent) text-(--trame-on-accent)')->toContain('rounded-(--trame-radius)')
         ->and($button(['color' => 'emerald-600']))->toContain('bg-emerald-600 text-white')->not->toContain('--trame-accent')
-        ->and($button(['variant' => 'outline']))->toContain('border px-4 py-2')->not->toContain('bg-(--trame-accent)')
+        ->and($button(['variant' => 'outline']))->toContain('rounded-(--trame-radius) border hover:bg-current/5 px-4 py-2')->not->toContain('bg-(--trame-accent)')
+        ->and($button(['size' => 'lg']))->toContain('px-6 py-3 text-lg')
+        ->and($button(['variant' => 'link', 'size' => 'lg']))->toContain('hover:decoration-current text-lg')->not->toContain('px-6 py-3')
         ->and($button(['variant' => 'link', 'color' => 'rose-600']))->toContain('underline-offset-4')->toContain('text-rose-600')
         ->and($button(['variant' => 'ghost']))->toContain('bg-(--trame-accent)');
 });
@@ -61,8 +63,9 @@ it('renders quotes with author and source, escaped', function () {
     $html = renderBlock('quote', ['quote' => ['fr' => 'Simple <b>et</b> clair'], 'author' => 'Ada', 'source' => ['fr' => 'Ingénieure'], 'size' => 'lg']);
 
     expect($html)
-        ->toContain('<figure class="border-s-2 ps-5 border-current/20"')
-        ->toContain('text-2xl leading-snug')
+        // The highlighted size takes the theme accent for its rule.
+        ->toContain('<figure class="ps-6 border-s-4 border-(--trame-accent)"')
+        ->toContain('text-2xl leading-snug font-medium')
         ->toContain('Simple &lt;b&gt;et&lt;/b&gt; clair')
         ->toContain('<span class="font-medium" >Ada</span>')
         ->toContain('Ingénieure')
@@ -85,7 +88,18 @@ it('renders callouts with a tone rule and keeps the previous demo data shape', f
     $html = renderBlock('callout', ['title' => ['fr' => 'Attention'], 'content' => ['fr' => '<p>Texte</p>'], 'tone' => 'warning']);
 
     expect($html)
-        ->toContain('<aside class="border-s-4 bg-current/5 px-5 py-4 border-amber-500" role="note">')
+        ->toContain('<aside class="flex gap-3 border-s-4 bg-current/5 px-5 py-4 border-amber-500" role="note">')
+        ->toContain('class="mt-1 size-5 shrink-0 text-amber-600"')
+        ->toContain('M10 3.5 2.5 16.5h15L10 3.5Z')
         ->toContain('>Attention</p>')
-        ->and(renderBlock('callout', ['content' => ['fr' => '<p>Note</p>']]))->toContain('border-current/40')->not->toContain('mb-2 font-semibold');
+        ->and(renderBlock('callout', ['content' => ['fr' => '<p>Note</p>']]))->toContain('border-current/40')->not->toContain('mb-1 font-semibold');
+});
+
+it('keeps text to a readable width, positioned by its alignment', function () {
+    $text = fn (array $data) => renderBlock('text', ['content' => ['fr' => '<p>Texte</p>'], ...$data]);
+
+    expect($text([]))->toContain('max-w-[65ch] ms-0 me-auto')->toContain('leading-7')
+        ->and($text(['align' => ['base' => 'start', 'md' => 'center']]))->toContain('max-w-[65ch] ms-0 me-auto md:mx-auto text-start md:text-center')
+        ->and($text(['width' => 'full']))->not->toContain('max-w-[65ch]')->not->toContain('me-auto')
+        ->and($text(['size' => 'lead']))->toContain('text-lg leading-8 sm:text-xl sm:leading-9')->not->toContain('leading-7');
 });

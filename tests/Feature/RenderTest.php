@@ -14,7 +14,7 @@ it('renders the grid and blocks in the requested locale', function () {
 
     expect($html)
         ->toMatch('/<h1 class="font-semibold text-balance text-3xl tracking-tight text-start"\s*>Hello<\/h1>/')
-        ->toContain('grid grid-cols-12 gap-x-3 gap-y-6 md:gap-x-6')
+        ->toContain('grid grid-cols-12 gap-x-3 gap-y-10 md:gap-x-6')
         ->toContain('col-span-12 md:col-span-6')
         ->toContain('<blockquote>Citation</blockquote>')
         ->not->toContain('data-trame-id');

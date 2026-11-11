@@ -22,6 +22,14 @@ abstract class Block
      */
     public static int $version = 1;
 
+    /**
+     * True when the view applies the appearance settings itself: it receives
+     * $box (class, style, framed, padded) and must put them on its root element,
+     * which should be a flex item that grows ("flex-1") to fill the column height.
+     * Otherwise Trame wraps the block in a <div> carrying them.
+     */
+    public static bool $box = false;
+
     /** @var array<int, Field>|null */
     private ?array $resolvedFields = null;
 

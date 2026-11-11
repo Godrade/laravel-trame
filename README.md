@@ -50,16 +50,34 @@ draw hairlines in that colour. Three CSS variables set the rest:
 
 Editors can still pick a palette colour per block; the variables only apply when they do not.
 
+### Appearance
+
+Every block and every column has an **Appearance** group in the editor, to match any site design:
+
+| Setting | Values |
+|---|---|
+| `background`, `text_color`, `border_color` | palette colour or any `#rrggbb` |
+| `padding` | `none` … `2xl`, per screen |
+| `border` | `none`, `thin`, `thick` |
+| `radius` | `none`, `theme` (`--trame-radius`), `sm` … `2xl`, `full` |
+| `shadow` | `none`, `sm` … `2xl` |
+| `class` | classes of your own stylesheet (letters, digits, `-`, `_`, `:`, `/`, `.`, `[`, `]`) |
+
+They are stored in the node `settings`, only when set. Free CSS is not accepted: use `class` and your
+stylesheet for anything the settings do not cover. A Tailwind class typed in `class` only works if your build
+already contains it.
+
 ### Core blocks
 
 | Block | Type | Notes |
 |---|---|---|
 | Heading | `heading` | level h1–h6, size, per-screen alignment |
-| Text | `text` | rich text (paragraphs, h2, h3, lists, quotes, links) styled without the typography plugin |
-| Quote | `quote` | quoted text, author, source; also for testimonials |
-| Callout | `callout` | title and rich text set apart by a side rule (info, success, warning) |
+| Text | `text` | rich text (paragraphs, h2, h3, lists, quotes, links) styled without the typography plugin; readable width (~65 characters) or full; regular or lead size |
+| Card | `card` | optional image, title, text and link; takes its look from Appearance, cards of a row share the same height |
+| Quote | `quote` | quoted text, author, source; regular, or highlighted with the accent rule |
+| Callout | `callout` | title and rich text on a tinted panel, with a rule and an icon per tone (info, success, warning) |
 | Question & answer | `question` | native `<details>`, no JavaScript; stack several for a FAQ |
-| Button | `button` | solid, outline or link |
+| Button | `button` | solid, outline or link; regular or large |
 | Image | `image` | alt text, optional caption |
 | Gallery | `gallery` | list of images with alt text and caption, columns per screen, crop format |
 | Spacer | `spacer` | vertical space, optional hairline |
@@ -288,8 +306,11 @@ The view receives every field (translatable ones already resolved for the locale
 - Escape plain text with `{{ }}`. Only `richText` values are sanitized HTML and may be printed with `{!! !!}`.
 - Write Tailwind classes literally (in the view or in a `Tokens`-style constant). A class built by
   concatenation is invisible to Tailwind and will be missing from the CSS.
-- Do not wrap the block in margins or visibility classes: editors set those per block
-  (`settings.margin_*`, `settings.hide`) and Trame adds the wrapper.
+- Do not wrap the block in margins, appearance or visibility classes: editors set those per block
+  (`settings.margin_*`, Appearance, `settings.hide`) and Trame adds a wrapper `<div>` when needed.
+- A block whose root must carry the appearance itself (a card whose image follows the rounded corners)
+  sets `public static bool $box = true;`. Its view then receives `$box` (`class`, `style`, `framed`,
+  `padded`) to put on the root element, which should grow with `flex-1` to fill the column height.
 
 ### Fields
 

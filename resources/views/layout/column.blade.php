@@ -1,1 +1,1 @@
-<div class="{{ $classes }}" {!! $attributes !!}>{!! $blocks !!}</div>
+<div class="{{ $classes }}" @if($style) style="{{ $style }}" @endif {!! $attributes !!}>{!! $blocks !!}</div>

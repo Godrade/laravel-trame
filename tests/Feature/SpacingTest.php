@@ -80,5 +80,6 @@ it('validates spacing values', function () {
 });
 
 it('exposes block layout fields to the editor', function () {
-    expect(array_column(Trame::definitions()['layout']['block'], 'name'))->toBe(['margin_top', 'margin_bottom']);
+    expect(array_column(Trame::definitions()['layout']['block'], 'name'))
+        ->toBe(['margin_top', 'margin_bottom', 'background', 'text_color', 'padding', 'border', 'border_color', 'radius', 'shadow', 'class']);
 });

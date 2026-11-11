@@ -40,7 +40,7 @@ final class QuestionBlock extends Block
         return [
             'answer' => $this->sanitizer->sanitize((string) $data['answer']),
             'classes' => Tokens::join('group border-b py-4', Tokens::RULE),
-            'prose' => Tokens::join('mt-3', Tokens::PROSE),
+            'prose' => Tokens::join('mt-3 leading-7', Tokens::PROSE),
         ];
     }
 

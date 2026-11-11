@@ -19,9 +19,15 @@ final class ButtonBlock extends Block
 
     /** Literal classes per variant (Tailwind must see them written out). */
     public const VARIANTS = [
-        'solid' => 'rounded-(--trame-radius) px-4 py-2 hover:opacity-85',
-        'outline' => 'rounded-(--trame-radius) border px-4 py-2 hover:bg-current/5',
+        'solid' => 'rounded-(--trame-radius) hover:opacity-85',
+        'outline' => 'rounded-(--trame-radius) border hover:bg-current/5',
         'link' => 'underline decoration-current/40 underline-offset-4 hover:decoration-current',
+    ];
+
+    /** Padding and type size; a link has no box, so only its type size changes. */
+    public const SIZES = [
+        'md' => ['px-4 py-2', ''],
+        'lg' => ['px-6 py-3 text-lg', 'text-lg'],
     ];
 
     public function schema(): array
@@ -31,6 +37,7 @@ final class ButtonBlock extends Block
             Field::url('url')->translatable()->required(),
             Field::toggle('new_tab'),
             Field::select('variant')->options(array_keys(self::VARIANTS))->default('solid'),
+            Field::select('size')->options(array_keys(self::SIZES))->default('md'),
             // No default: solid buttons use the theme accent (--trame-accent), others the text colour.
             Field::color('color'),
             Field::select('align')->options(Tokens::keys(Tokens::JUSTIFY))->default('start')->responsive(),
@@ -62,6 +69,7 @@ final class ButtonBlock extends Block
             'classes' => Tokens::join(
                 'inline-flex items-center justify-center gap-2 font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current',
                 self::VARIANTS[$variant],
+                (self::SIZES[$data['size']] ?? self::SIZES['md'])[$variant === 'link' ? 1 : 0],
                 $colorClasses,
             ),
             'style' => $color['style'].$text['style'],

@@ -15,12 +15,17 @@ final class BlockLayout
     public static function schema(): array
     {
         return [
-            Field::select('margin_top')->options(Tokens::SPACE)->responsive(),
+            Field::select('margin_top')->options(Tokens::SPACE)->responsive()->group(__('trame::fields.group_spacing')),
             Field::select('margin_bottom')->options(Tokens::SPACE)->responsive(),
+            ...Box::fields(),
         ];
     }
 
-    /** @param array<string, mixed> $settings */
+    /**
+     * Margin classes only; appearance classes come from Box::classes().
+     *
+     * @param  array<string, mixed>  $settings
+     */
     public static function classes(array $settings): string
     {
         return Tokens::join(

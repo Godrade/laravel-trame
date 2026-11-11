@@ -312,6 +312,7 @@
                                         </span>
                                     </div>
                                     <p x-show="isInherited(field)" class="text-xs text-zinc-400" x-text="t.inherited"></p>
+                                    <p x-show="field.help" class="text-xs leading-relaxed text-zinc-500" x-text="field.help"></p>
 
                                     @include('trame::editor.partials.field-control', ['f' => 'field', 'c' => '', 'nested' => false])
 

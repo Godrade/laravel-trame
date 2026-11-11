@@ -5,6 +5,7 @@ namespace Godrade\Trame\Document;
 use Godrade\Trame\Blocks\BlockRegistry;
 use Godrade\Trame\Fields\Schema;
 use Godrade\Trame\Layout\BlockLayout;
+use Godrade\Trame\Layout\Box;
 use Godrade\Trame\Layout\ColumnLayout;
 use Godrade\Trame\Layout\RowLayout;
 use Godrade\Trame\Layout\SectionLayout;
@@ -151,10 +152,16 @@ final class DocumentNormalizer
         $settings = is_array($node['settings'] ?? null) ? $node['settings'] : [];
         $hide = Tokens::hiddenOn($settings['hide'] ?? null);
 
-        return [
-            ...Schema::normalize($schema, $settings, $this->localizer, $this->sanitizer),
-            ...($hide === [] ? [] : ['hide' => $hide]),
-        ];
+        $normalized = Schema::normalize($schema, $settings, $this->localizer, $this->sanitizer);
+
+        // Appearance values are optional overrides: unset ones are not stored.
+        foreach (Box::NAMES as $name) {
+            if (array_key_exists($name, $normalized) && ($normalized[$name] === null || $normalized[$name] === '')) {
+                unset($normalized[$name]);
+            }
+        }
+
+        return [...$normalized, ...($hide === [] ? [] : ['hide' => $hide])];
     }
 
     /** @return array<string, mixed>|null */

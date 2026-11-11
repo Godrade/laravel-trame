@@ -21,7 +21,13 @@ final class QuoteBlock extends Block
     /** Literal classes per size (Tailwind must see them written out). */
     public const SIZES = [
         'md' => 'text-lg leading-8',
-        'lg' => 'text-2xl leading-snug sm:text-3xl',
+        'lg' => 'text-2xl leading-snug font-medium tracking-tight sm:text-3xl',
+    ];
+
+    /** A highlighted quote takes the theme accent for its rule; a regular one a hairline. */
+    public const RULES = [
+        'md' => 'border-s-2 border-current/20',
+        'lg' => 'border-s-4 border-(--trame-accent)',
     ];
 
     public static function label(): string
@@ -45,7 +51,7 @@ final class QuoteBlock extends Block
         $color = Tokens::color($data['color'], 'text');
 
         return [
-            'figure' => Tokens::join('border-s-2 ps-5', Tokens::RULE, $color['class']),
+            'figure' => Tokens::join('ps-6', self::RULES[$data['size']] ?? self::RULES['md'], $color['class']),
             'style' => $color['style'],
             'text' => Tokens::join('text-pretty', self::SIZES[$data['size']] ?? self::SIZES['md']),
         ];
