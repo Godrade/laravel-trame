@@ -21,4 +21,8 @@ return [
     'anchor' => 'Ancre (id)',
     'gap' => 'Espacement des colonnes',
     'valign' => 'Alignement vertical',
+    'rows_gap' => 'Espace entre les lignes',
+    'blocks_gap' => 'Espace entre les blocs',
+    'margin_top' => 'Marge haute',
+    'margin_bottom' => 'Marge basse',
 ];

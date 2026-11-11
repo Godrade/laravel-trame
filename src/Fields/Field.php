@@ -289,12 +289,7 @@ final class Field
     {
         $value = is_array($value) ? $value : ['base' => $value];
         $base = $this->castOption($value['base'] ?? null);
-
-        if ($base === null) {
-            return null;
-        }
-
-        $out = ['base' => $base];
+        $out = $base === null ? [] : ['base' => $base];
 
         foreach (array_keys(Grid::BREAKPOINTS) as $breakpoint) {
             if ($breakpoint !== 'base' && isset($value[$breakpoint]) && $this->hasOption($value[$breakpoint])) {
@@ -302,7 +297,8 @@ final class Field
             }
         }
 
-        return $out;
+        // Without a default, base may stay unset while md/lg are set (e.g. a margin on desktop only).
+        return $out === [] ? null : $out;
     }
 
     private function hasOption(mixed $value): bool

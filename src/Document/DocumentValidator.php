@@ -5,6 +5,7 @@ namespace Godrade\Trame\Document;
 use Godrade\Trame\Blocks\BlockRegistry;
 use Godrade\Trame\Fields\Field;
 use Godrade\Trame\Fields\Schema;
+use Godrade\Trame\Layout\BlockLayout;
 use Godrade\Trame\Layout\ColumnLayout;
 use Godrade\Trame\Layout\RowLayout;
 use Godrade\Trame\Layout\SectionLayout;
@@ -221,6 +222,7 @@ final class DocumentValidator
             return;
         }
 
+        $this->settings(BlockLayout::schema(), $node['settings'] ?? [], "{$path}.settings");
         $this->hide($node, $path);
     }
 

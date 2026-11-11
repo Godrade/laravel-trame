@@ -12,7 +12,8 @@ final class SectionLayout
     {
         return [
             Field::color('bg')->allowCustom(),
-            Field::select('padding')->options(Tokens::keys(Tokens::SECTION_PADDING))->default('md'),
+            Field::select('padding')->options(Tokens::keys(Tokens::SECTION_PADDING))->default('md')->responsive(),
+            Field::select('rows_gap')->options(Tokens::SPACE)->default('none')->responsive(),
             Field::select('container')->options(Tokens::keys(Tokens::CONTAINER))->default('boxed'),
             Field::text('anchor')->max(64)->rules(['alpha_dash']),
         ];
@@ -27,8 +28,12 @@ final class SectionLayout
         $bg = Tokens::color($settings['bg'] ?? null, 'bg');
 
         return [
-            'section' => Tokens::join('relative w-full', $bg['class'], Tokens::pick(Tokens::SECTION_PADDING, $settings['padding'] ?? null, 'md')),
-            'container' => Tokens::pick(Tokens::CONTAINER, $settings['container'] ?? null, 'boxed'),
+            'section' => Tokens::join('relative w-full', $bg['class'], Tokens::responsive(Tokens::SECTION_PADDING_RESPONSIVE, $settings['padding'] ?? null, 'md')),
+            'container' => Tokens::join(
+                Tokens::pick(Tokens::CONTAINER, $settings['container'] ?? null, 'boxed'),
+                'flex flex-col',
+                Tokens::responsive(Tokens::ROWS_GAP_RESPONSIVE, $settings['rows_gap'] ?? null, 'none'),
+            ),
             'style' => $bg['style'],
         ];
     }

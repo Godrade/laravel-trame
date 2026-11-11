@@ -62,7 +62,7 @@ it('normalizes ids, defaults and spans', function () {
     $block = $column['blocks'][0];
 
     expect($section['id'])->toStartWith('sec_')
-        ->and($section['settings'])->toMatchArray(['padding' => 'md', 'container' => 'boxed'])
+        ->and($section['settings'])->toMatchArray(['padding' => ['base' => 'md'], 'rows_gap' => ['base' => 'none'], 'container' => 'boxed'])
         ->and($column['span'])->toBe(['base' => 12, 'md' => 6])
         ->and($block)->toMatchArray(['type' => 'heading', 'v' => 1])
         ->and($block['data'])->toMatchArray(['text' => ['fr' => 'Salut'], 'level' => 2, 'align' => ['base' => 'start']]);

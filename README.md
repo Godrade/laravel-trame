@@ -95,19 +95,19 @@ Page → Sections → Rows → Columns (span per breakpoint: base, md, lg) → B
 {
   "sections": [{
     "id": "sec_1",
-    "settings": { "bg": "slate-900", "padding": "lg", "container": "boxed" },
+    "settings": { "bg": "slate-900", "padding": { "base": "md", "lg": "xl" }, "rows_gap": { "base": "md" }, "container": "boxed" },
     "rows": [{
       "id": "row_1",
       "settings": { "gap": "md" },
       "columns": [{
         "id": "col_1",
         "span": { "base": 12, "md": 6 },
-        "settings": { "valign": "start" },
+        "settings": { "valign": "start", "gap": { "base": "sm" } },
         "blocks": [
           { "id": "blk_1", "type": "heading", "v": 1,
             "data": { "text": { "fr": "Bienvenue", "en": "Welcome" }, "level": 1, "color": "white",
                       "align": { "base": "center", "lg": "start" } },
-            "settings": { "hide": ["base"] } }
+            "settings": { "hide": ["base"], "margin_top": { "lg": "md" } } }
         ]
       }]
     }]
@@ -126,6 +126,19 @@ edited through the device switcher of the editor.
   wrapping `<div>`). In the editor the node stays selectable and is dimmed on the matching device.
 - A responsive select stores one value per breakpoint; `md` and `lg` are optional and inherit from the
   breakpoint below. A plain scalar (data saved before the field became responsive) is read as `base`.
+
+**Spacing.** Space between elements uses one scale, `none` 0, `xs` .5rem, `sm` 1rem, `md` 2rem, `lg` 3rem,
+`xl` 4rem, `2xl` 6rem, set per breakpoint:
+
+| Where | Setting | Default |
+|---|---|---|
+| Section, vertical padding | `settings.padding` (`none`, `sm`, `md`, `lg`, `xl`) | `md` |
+| Between the rows of a section | `settings.rows_gap` | `none` |
+| Between the columns of a row | `settings.gap` on the row (`none`, `sm`, `md`, `lg`) | `md` |
+| Between the blocks of a column | `settings.gap` on the column | `sm` |
+| Around one block | `settings.margin_top`, `settings.margin_bottom` on the block | unset |
+
+Block settings are optional and only stored when set; a block with a margin gets a wrapping `<div>`.
 
 Any section, row or block can be replaced by a global template reference:
 `{ "type": "global", "ref": 12 }`.

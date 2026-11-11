@@ -7,6 +7,7 @@ use Godrade\Trame\Blocks\BlockRegistry;
 use Godrade\Trame\Document\Renderer;
 use Godrade\Trame\Fields\Field;
 use Godrade\Trame\Http\Controllers\PageController;
+use Godrade\Trame\Layout\BlockLayout;
 use Godrade\Trame\Layout\ColumnLayout;
 use Godrade\Trame\Layout\RowLayout;
 use Godrade\Trame\Layout\SectionLayout;
@@ -105,6 +106,7 @@ class Trame
                 'section' => $fields(SectionLayout::schema()),
                 'row' => $fields(RowLayout::schema()),
                 'column' => $fields(ColumnLayout::schema()),
+                'block' => $fields(BlockLayout::schema()),
             ],
             'blocks' => array_values(array_map(fn (Block $block) => $block->definition(), $this->registry->all())),
         ];

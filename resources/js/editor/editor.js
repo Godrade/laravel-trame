@@ -707,22 +707,39 @@ export default function editor() {
             }
 
             if (entry.kind === 'block') {
-                return this.blockDefs[entry.node.type]?.fields ?? [];
+                return [...(this.blockDefs[entry.node.type]?.fields ?? []), ...this.blockLayoutFields];
             }
 
             return { section: this.defs.layout.section, row: this.defs.layout.row, column: this.defs.layout.column }[entry.kind] ?? [];
         },
 
-        container() {
+        /** Settings shared by every block (margins), stored in node.settings rather than node.data. */
+        get blockLayoutFields() {
+            return (this._blockLayoutFields ??= (this.defs?.layout.block ?? []).map((field, i) => ({ ...field, scope: 'settings', group: i === 0 ? this.t.spacing : null })));
+        },
+
+        scopeOf(field) {
+            return field?.scope ?? (this.selected?.kind === 'block' ? 'data' : 'settings');
+        },
+
+        /**
+         * Object holding the field's value (node.data or node.settings). Reading never
+         * changes the document: a missing object is only created when writing (create).
+         */
+        container(field = null, create = false) {
             const entry = this.selected;
 
             if (!entry) {
                 return null;
             }
 
-            const key = entry.kind === 'block' ? 'data' : 'settings';
+            const key = this.scopeOf(field);
 
             if (!D.isObject(entry.node[key])) {
+                if (!create) {
+                    return {};
+                }
+
                 entry.node[key] = {};
             }
 
@@ -735,31 +752,30 @@ export default function editor() {
             this.breakpoint;
 
             return field.responsive
-                ? D.readResponsive(this.container(), field, this.breakpoint)
-                : D.readField(this.container(), field, this.locale);
+                ? D.readResponsive(this.container(field), field, this.breakpoint)
+                : D.readField(this.container(field), field, this.locale);
         },
 
         setValue(field, value) {
-            const container = this.container();
-
-            if (!container) {
+            if (!this.selected) {
                 return;
             }
 
+            // The container is created inside mutate() so undo also removes it.
             if (field.responsive) {
-                this.mutate(() => D.writeResponsive(container, field, this.breakpoint, value), `${this.selectedId}:${field.name}:${this.breakpoint}`);
+                this.mutate(() => D.writeResponsive(this.container(field, true), field, this.breakpoint, value), `${this.selectedId}:${field.name}:${this.breakpoint}`);
 
                 return;
             }
 
-            this.mutate(() => D.writeField(container, field, this.locale, value), `${this.selectedId}:${field.name}:${this.locale}`);
+            this.mutate(() => D.writeField(this.container(field, true), field, this.locale, value), `${this.selectedId}:${field.name}:${this.locale}`);
         },
 
         /** Responsive field without its own value on the current breakpoint. */
         isInherited(field) {
             this.version;
 
-            return !!field.responsive && D.isResponsiveInherited(this.container(), field, this.breakpoint);
+            return !!field.responsive && D.isResponsiveInherited(this.container(field), field, this.breakpoint);
         },
 
         /* ----------------------------------------------------------- visibility */
@@ -787,7 +803,7 @@ export default function editor() {
                 return '';
             }
 
-            return D.stripTags(D.readField(this.container(), field, this.fallback));
+            return D.stripTags(D.readField(this.container(field), field, this.fallback));
         },
 
         isSelectedOption(field, option) {
@@ -795,8 +811,7 @@ export default function editor() {
         },
 
         fieldErrors(field) {
-            const scope = this.selected?.kind === 'block' ? 'data' : 'settings';
-            const prefix = `${scope}.${field.name}`;
+            const prefix = `${this.scopeOf(field)}.${field.name}`;
 
             // Errors on another locale (e.g. required fallback while editing "en") are tagged with it.
             const errors = (this.errorMap.get(this.selectedId) ?? []).filter((error) => error.rel === prefix || error.rel.startsWith(`${prefix}.`));

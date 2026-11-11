@@ -13,6 +13,7 @@ final class ColumnLayout
     {
         return [
             Field::select('valign')->options(Tokens::keys(Tokens::VALIGN))->default('start'),
+            Field::select('gap')->label(__('trame::fields.blocks_gap'))->options(Tokens::SPACE)->default('sm')->responsive(),
         ];
     }
 
@@ -23,7 +24,8 @@ final class ColumnLayout
     public static function classes(array $settings, array $span): string
     {
         return Tokens::join(
-            'flex min-w-0 flex-col gap-4',
+            'flex min-w-0 flex-col',
+            Tokens::responsive(Tokens::STACK_GAP_RESPONSIVE, $settings['gap'] ?? null, 'sm'),
             Grid::span($span),
             Tokens::pick(Tokens::VALIGN, $settings['valign'] ?? null, 'start'),
         );

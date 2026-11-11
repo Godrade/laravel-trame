@@ -21,4 +21,8 @@ return [
     'anchor' => 'Anchor (id)',
     'gap' => 'Column gap',
     'valign' => 'Vertical alignment',
+    'rows_gap' => 'Space between rows',
+    'blocks_gap' => 'Space between blocks',
+    'margin_top' => 'Top margin',
+    'margin_bottom' => 'Bottom margin',
 ];

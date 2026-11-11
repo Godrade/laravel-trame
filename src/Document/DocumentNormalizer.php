@@ -4,6 +4,7 @@ namespace Godrade\Trame\Document;
 
 use Godrade\Trame\Blocks\BlockRegistry;
 use Godrade\Trame\Fields\Schema;
+use Godrade\Trame\Layout\BlockLayout;
 use Godrade\Trame\Layout\ColumnLayout;
 use Godrade\Trame\Layout\RowLayout;
 use Godrade\Trame\Layout\SectionLayout;
@@ -126,7 +127,8 @@ final class DocumentNormalizer
             $data = $block->migrate($data, $storedVersion);
         }
 
-        $settings = $this->settings([], $node);
+        // Block settings are optional overrides: unset values are not stored.
+        $settings = array_filter($this->settings(BlockLayout::schema(), $node), fn ($value) => $value !== null);
 
         return [
             'id' => $this->id($node, 'blk'),

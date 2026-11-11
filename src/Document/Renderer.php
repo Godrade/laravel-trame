@@ -4,6 +4,7 @@ namespace Godrade\Trame\Document;
 
 use Godrade\Trame\Blocks\BlockRegistry;
 use Godrade\Trame\Fields\Schema;
+use Godrade\Trame\Layout\BlockLayout;
 use Godrade\Trame\Layout\ColumnLayout;
 use Godrade\Trame\Layout\RowLayout;
 use Godrade\Trame\Layout\SectionLayout;
@@ -119,13 +120,15 @@ final class Renderer
             'editable' => $this->editable(...),
         ])->render();
 
+        // Wrapper only when needed: block margins, and hide classes in public output.
+        $classes = Tokens::join(BlockLayout::classes($node['settings'] ?? []), $this->hideClasses($node));
+        $class = $classes === '' ? '' : ' class="'.$classes.'"';
+
         if ($this->editing) {
-            return '<div '.$this->attributes($node['id'], 'block', $node).' data-trame-type="'.e($node['type']).'">'.$html.'</div>';
+            return '<div'.$class.' '.$this->attributes($node['id'], 'block', $node).' data-trame-type="'.e($node['type']).'">'.$html.'</div>';
         }
 
-        $hide = $this->hideClasses($node);
-
-        return $hide === '' ? $html : '<div class="'.$hide.'">'.$html.'</div>';
+        return $classes === '' ? $html : '<div'.$class.'>'.$html.'</div>';
     }
 
     /**

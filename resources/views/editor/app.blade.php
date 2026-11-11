@@ -299,8 +299,9 @@
                             </template>
 
                             {{-- Fields --}}
-                            <template x-for="field in panelFields" :key="selectedId + ':' + field.name">
-                                <div class="space-y-1.5">
+                            <template x-for="field in panelFields" :key="selectedId + ':' + scopeOf(field) + ':' + field.name">
+                                <div class="space-y-1.5" :class="field.group && 'border-t border-zinc-100 pt-4'">
+                                    <h3 x-show="field.group" class="tr-heading" x-text="field.group"></h3>
                                     <div class="flex items-center justify-between gap-2">
                                         <label class="tr-label" x-text="field.label + (field.required ? ' *' : '')"></label>
                                         <span x-show="field.translatable" class="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-500 uppercase" x-text="locale"></span>

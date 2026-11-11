@@ -28,6 +28,37 @@ final class Tokens
         'lg' => ['start' => 'lg:justify-start', 'center' => 'lg:justify-center', 'end' => 'lg:justify-end'],
     ];
 
+    /** Spacing scale shared by gaps and margins: none 0, xs .5rem, sm 1rem, md 2rem, lg 3rem, xl 4rem, 2xl 6rem. */
+    public const SPACE = ['none', 'xs', 'sm', 'md', 'lg', 'xl', '2xl'];
+
+    /** Space between the blocks of a column (flex gap). */
+    public const STACK_GAP_RESPONSIVE = [
+        'base' => ['none' => 'gap-0', 'xs' => 'gap-2', 'sm' => 'gap-4', 'md' => 'gap-8', 'lg' => 'gap-12', 'xl' => 'gap-16', '2xl' => 'gap-24'],
+        'md' => ['none' => 'md:gap-0', 'xs' => 'md:gap-2', 'sm' => 'md:gap-4', 'md' => 'md:gap-8', 'lg' => 'md:gap-12', 'xl' => 'md:gap-16', '2xl' => 'md:gap-24'],
+        'lg' => ['none' => 'lg:gap-0', 'xs' => 'lg:gap-2', 'sm' => 'lg:gap-4', 'md' => 'lg:gap-8', 'lg' => 'lg:gap-12', 'xl' => 'lg:gap-16', '2xl' => 'lg:gap-24'],
+    ];
+
+    /** Space between the rows of a section (flex gap). */
+    public const ROWS_GAP_RESPONSIVE = self::STACK_GAP_RESPONSIVE;
+
+    public const MARGIN_TOP_RESPONSIVE = [
+        'base' => ['none' => 'mt-0', 'xs' => 'mt-2', 'sm' => 'mt-4', 'md' => 'mt-8', 'lg' => 'mt-12', 'xl' => 'mt-16', '2xl' => 'mt-24'],
+        'md' => ['none' => 'md:mt-0', 'xs' => 'md:mt-2', 'sm' => 'md:mt-4', 'md' => 'md:mt-8', 'lg' => 'md:mt-12', 'xl' => 'md:mt-16', '2xl' => 'md:mt-24'],
+        'lg' => ['none' => 'lg:mt-0', 'xs' => 'lg:mt-2', 'sm' => 'lg:mt-4', 'md' => 'lg:mt-8', 'lg' => 'lg:mt-12', 'xl' => 'lg:mt-16', '2xl' => 'lg:mt-24'],
+    ];
+
+    public const MARGIN_BOTTOM_RESPONSIVE = [
+        'base' => ['none' => 'mb-0', 'xs' => 'mb-2', 'sm' => 'mb-4', 'md' => 'mb-8', 'lg' => 'mb-12', 'xl' => 'mb-16', '2xl' => 'mb-24'],
+        'md' => ['none' => 'md:mb-0', 'xs' => 'md:mb-2', 'sm' => 'md:mb-4', 'md' => 'md:mb-8', 'lg' => 'md:mb-12', 'xl' => 'md:mb-16', '2xl' => 'md:mb-24'],
+        'lg' => ['none' => 'lg:mb-0', 'xs' => 'lg:mb-2', 'sm' => 'lg:mb-4', 'md' => 'lg:mb-8', 'lg' => 'lg:mb-12', 'xl' => 'lg:mb-16', '2xl' => 'lg:mb-24'],
+    ];
+
+    public const SECTION_PADDING_RESPONSIVE = [
+        'base' => ['none' => 'py-0', 'sm' => 'py-8', 'md' => 'py-12', 'lg' => 'py-20', 'xl' => 'py-32'],
+        'md' => ['none' => 'md:py-0', 'sm' => 'md:py-8', 'md' => 'md:py-12', 'lg' => 'md:py-20', 'xl' => 'md:py-32'],
+        'lg' => ['none' => 'lg:py-0', 'sm' => 'lg:py-8', 'md' => 'lg:py-12', 'lg' => 'lg:py-20', 'xl' => 'lg:py-32'],
+    ];
+
     /**
      * Breakpoint => class hiding an element on that breakpoint only.
      * Range variants leave the element's display untouched elsewhere.

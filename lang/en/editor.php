@@ -42,6 +42,7 @@ return [
     'column_width' => 'Width',
     'inherited' => 'inherited',
     'reset' => 'Reset',
+    'spacing' => 'Spacing',
     'visibility' => 'Visibility',
     'hide_on' => 'Hide on:',
     'settings' => 'Settings',
