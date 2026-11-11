@@ -5,13 +5,18 @@ namespace Godrade\Trame\Tests;
 use Godrade\Trame\TrameServiceProvider;
 use Orchestra\Testbench\Attributes\WithMigration;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Spatie\MediaLibrary\MediaLibraryServiceProvider;
 
 #[WithMigration]
 abstract class TestCase extends Orchestra
 {
     protected function getPackageProviders($app): array
     {
-        return [TrameServiceProvider::class];
+        return array_filter([
+            TrameServiceProvider::class,
+            // Optional: only needed by SpatieMediaProvider tests.
+            class_exists(MediaLibraryServiceProvider::class) ? MediaLibraryServiceProvider::class : null,
+        ]);
     }
 
     protected function defineEnvironment($app): void

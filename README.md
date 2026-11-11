@@ -234,6 +234,49 @@ Validation errors use full paths: `document.sections.0.rows.0.columns.1.blocks.2
 Implement `Godrade\Trame\Media\MediaProvider` and set `trame.media.provider`.
 `LocalDiskProvider` (Laravel disk + `trame_media` table) is the default.
 
+### Spatie Media Library
+
+```bash
+composer require spatie/laravel-medialibrary
+php artisan vendor:publish --provider="Spatie\MediaLibrary\MediaLibraryServiceProvider" --tag="medialibrary-migrations"
+php artisan migrate
+```
+
+```php
+// config/trame.php
+'media' => [
+    'provider' => \Godrade\Trame\Media\SpatieMediaProvider::class,
+    'spatie' => [
+        'model' => \Godrade\Trame\Models\MediaLibrary::class,
+        'library' => 'default',     // one owner record per library name
+        'collection' => 'trame',
+        'disk' => null,             // null: media-library.disk_name
+        'conversion' => null,       // e.g. 'web': served instead of the original once generated
+    ],
+],
+```
+
+Uploads are attached to a `MediaLibrary` record (`trame_media_libraries` table). The editor only lists and
+resolves media of that record and collection: an id pointing to another model's media renders nothing.
+
+To use conversions, extend the model and point `trame.media.spatie.model` to it:
+
+```php
+use Godrade\Trame\Models\MediaLibrary;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+
+class TrameMedia extends MediaLibrary
+{
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('web')->fit(Fit::Max, 1600, 1600)->format('webp');
+    }
+}
+```
+
+Switching providers does not migrate existing files: image blocks keep the ids of the previous provider.
+
 ## Cache
 
 Published renders are cached per content, published document and locale. After deploying changes to

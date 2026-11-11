@@ -1,6 +1,7 @@
 <?php
 
 use Godrade\Trame\Media\LocalDiskProvider;
+use Godrade\Trame\Models\MediaLibrary;
 
 return [
 
@@ -111,10 +112,22 @@ return [
     */
 
     'media' => [
+        // LocalDiskProvider, SpatieMediaProvider (requires spatie/laravel-medialibrary) or your own MediaProvider.
         'provider' => LocalDiskProvider::class,
+        'max_kb' => 5120,
+
+        // LocalDiskProvider
         'disk' => 'public',
         'directory' => 'trame',
-        'max_kb' => 5120,
+
+        // SpatieMediaProvider
+        'spatie' => [
+            'model' => MediaLibrary::class, // extend it to register conversions
+            'library' => 'default',
+            'collection' => 'trame',
+            'disk' => null,        // null: media-library.disk_name
+            'conversion' => null,  // conversion name served instead of the original, when generated
+        ],
     ],
 
     /*
