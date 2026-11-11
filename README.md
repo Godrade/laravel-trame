@@ -2,14 +2,15 @@
 
 Visual, grid-based, multilingual page builder for Laravel and Tailwind CSS v4.
 
-> **Status: pre-alpha.** Server side (document model, blocks, 12-column grid, translations, rendering,
-> JSON API) and the visual editor (Alpine + SortableJS + Tiptap, prebuilt in `dist/`).
+> **Status: v0.1, early release.** The document format and the block API may still change before 1.0;
+> breaking changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
-- PHP 8.3+, Laravel 12+, Tailwind CSS v4
+- PHP 8.3+, Laravel 12 or 13, Tailwind CSS v4
 - No paid dependency, no Livewire requirement
 - Layout shared across locales, translatable fields per block
 - Custom blocks in PHP + Blade, reusable and global templates
-- Pluggable media storage
+- Per-screen settings (visibility, alignment, spacing)
+- Pluggable media storage (local disk or Spatie Media Library)
 
 ## Installation
 
@@ -63,19 +64,9 @@ build (`trame.editor.preview.vite`), so what you see is what is published.
 - Undo / redo (⌘Z / ⇧⌘Z), save (⌘S), publish, optimistic locking
 - Media library, reusable and global templates
 
-If you override the preview layout, keep `{!! $bridge ?? '' !!}` before `</body>`.
+To change the canvas markup, see [Editor preview](#editor-preview).
 
-### In-place editing in your own blocks
-
-Block views receive an `$editable` helper. Put it on the element that displays a text field:
-
-```blade
-<h3 class="…" {!! $editable('title') !!}>{{ $title }}</h3>
-<div class="…" {!! $editable('body', rich: true) !!}>{!! $body !!}</div>
-```
-
-It renders nothing outside the editor. Use it only on an element that displays the field as-is
-(no extra markup or formatting inside), otherwise the edited text would include it.
+Block views opt in to in-place editing with `$editable` (see [Custom blocks](#in-place-editing)).
 
 ### Developing the editor
 
@@ -180,31 +171,59 @@ Alignment uses logical values (`start` / `center` / `end`) so RTL languages work
 
 ## Custom blocks
 
+A block is a PHP class (schema, view, optional view data) and a Blade view.
+
 ```bash
 php artisan make:trame-block Testimonial
+# app/Trame/Blocks/TestimonialBlock.php + resources/views/trame/blocks/testimonial.blade.php
 ```
 
-Blocks in `app/Trame/Blocks` are discovered automatically.
+Classes in `app/Trame/Blocks` are discovered automatically (`trame.blocks.discover`). Classes elsewhere go
+in `trame.blocks.register`. A block reusing a core `$type` replaces the core block.
+
+### The class
 
 ```php
+namespace App\Trame\Blocks;
+
+use Godrade\Trame\Blocks\Block;
+use Godrade\Trame\Fields\Field;
+use Godrade\Trame\Media\MediaProvider;
+use Godrade\Trame\Support\Tokens;
+
 final class TestimonialBlock extends Block
 {
-    public static string $type = 'testimonial';
+    public static string $type = 'testimonial';   // stored in documents: never rename it
+    public static string $category = 'content';    // palette group: content, media, layout or your own
     public static int $version = 1;
+
+    // Blocks are resolved from the container: inject what with() needs.
+    public function __construct(private readonly MediaProvider $media) {}
+
+    public static function label(): string
+    {
+        return __('Testimonial');
+    }
 
     public function schema(): array
     {
         return [
-            Field::textarea('quote')->translatable()->required(),
-            Field::text('author'),
+            Field::textarea('quote')->label(__('Quote'))->translatable()->required()->max(500),
+            Field::text('author')->required()->max(80),
             Field::image('avatar'),
             Field::color('accent')->default('indigo-600'),
+            Field::select('align')->options(Tokens::keys(Tokens::ALIGN))->default('start')->responsive(),
         ];
     }
 
+    /** Extra view variables, computed from the values resolved for the current locale. */
     public function with(array $data): array
     {
-        return ['accent' => Tokens::color($data['accent'], 'text')];
+        return [
+            'avatar' => $data['avatar'] !== null ? $this->media->find($data['avatar']) : null,
+            'accent' => Tokens::color($data['accent'], 'bg'),
+            'alignment' => Tokens::responsive(Tokens::ALIGN_RESPONSIVE, $data['align'], 'start'),
+        ];
     }
 
     public function view(): string
@@ -214,18 +233,160 @@ final class TestimonialBlock extends Block
 }
 ```
 
-The schema drives both server-side validation and the editor settings panel.
+The schema drives server-side validation, normalization and the editor settings panel.
 
-**Changing a schema:** increment `$version` and implement `migrate(array $data, int $fromVersion)`.
-Stored documents are migrated on read and on save. Never rename `$type` once in production.
+### The view
 
-Field types: `text`, `textarea`, `richText` (sanitized), `url` (http(s), relative, `#`, `mailto:`, `tel:` only),
-`number`, `toggle`, `select`, `color` (palette, `->allowCustom()` for hex), `image`.
+The view receives every field (translatable ones already resolved for the locale), the `with()` values,
+`$locale`, `$editing` (true in the editor canvas) and `$editable`.
 
-**Per-screen values:** `Field::select('align')->options([...])->responsive()` lets editors set a value per
-device. Render it with `Tokens::responsive(Tokens::ALIGN_RESPONSIVE, $data['align'], 'start')`
-(`JUSTIFY_RESPONSIVE` for flex alignment). The class maps are written literally in `Tokens` so Tailwind
-detects them; add your own literal map for other responsive values.
+```blade
+{{-- resources/views/trame/blocks/testimonial.blade.php --}}
+<figure class="{{ $alignment }}">
+    <blockquote><p {!! $editable('quote') !!}>{{ $quote }}</p></blockquote>
+    <figcaption class="flex items-center gap-3">
+        @if($avatar)
+            <img src="{{ $avatar->url }}" alt="" class="size-10 rounded-full">
+        @else
+            <span class="size-10 rounded-full {{ $accent['class'] }}" @if($accent['style']) style="{{ $accent['style'] }}" @endif></span>
+        @endif
+        <span {!! $editable('author') !!}>{{ $author }}</span>
+    </figcaption>
+</figure>
+```
+
+- Escape plain text with `{{ }}`. Only `richText` values are sanitized HTML and may be printed with `{!! !!}`.
+- Write Tailwind classes literally (in the view or in a `Tokens`-style constant). A class built by
+  concatenation is invisible to Tailwind and will be missing from the CSS.
+- Do not wrap the block in margins or visibility classes: editors set those per block
+  (`settings.margin_*`, `settings.hide`) and Trame adds the wrapper.
+
+### Fields
+
+| Factory | Stored value | Notes |
+|---|---|---|
+| `Field::text($name)` | string | `->max()` (255 by default) |
+| `Field::textarea($name)` | string | 5000 by default |
+| `Field::richText($name)` | sanitized HTML | Tiptap in the editor |
+| `Field::url($name)` | string | `http(s)://`, `/`, `#`, `mailto:`, `tel:` only |
+| `Field::number($name)` | int or float | `->min()`, `->max()` |
+| `Field::toggle($name)` | bool | defaults to `false` |
+| `Field::select($name)` | option key | `->options(['a', 'b'])` or `['a' => 'Label']`, `->responsive()` |
+| `Field::color($name)` | palette token | `->allowCustom()` also accepts `#rrggbb`; render with `Tokens::color()` |
+| `Field::image($name)` | media id | resolve it with `MediaProvider::find()` |
+
+Common modifiers: `->label()`, `->default()`, `->required()`, `->help()`, `->rules([...])` (extra Laravel
+rules), `->translatable()` (text, textarea, richText and url only: one value per locale).
+
+`->responsive()` (select only) stores one value per breakpoint. Render it with `Tokens::responsive()` and a
+literal class map: `ALIGN_RESPONSIVE` and `JUSTIFY_RESPONSIVE` are provided, add your own for other values.
+
+### In-place editing
+
+`$editable('field')` makes an element editable in the canvas by double-click; add `rich: true` for a
+`richText` field. It renders nothing outside the editor. Put it on an element that contains the value only:
+any extra markup or text inside it (quotes, icons) would end up in the stored value.
+
+### Changing a schema
+
+Adding an optional field or a default needs nothing: stored documents are normalized on read. To rename a
+field or change its shape, increment `$version` and convert old data in `migrate()`. Documents are migrated
+on read and on save.
+
+```php
+public static int $version = 2;
+
+public function migrate(array $data, int $fromVersion): array
+{
+    if ($fromVersion < 2) {
+        $data['author'] ??= $data['name'] ?? null;   // v1 called it "name"
+        unset($data['name']);
+    }
+
+    return $data;
+}
+```
+
+A block whose class is missing is kept untouched in stored documents and skipped when rendering, so
+removing a class temporarily does not lose data.
+
+`$icon` is reserved: the palette currently shows the first letter of the label.
+
+## Customising views
+
+Publish the views you want to change (`resources/views/vendor/trame`), or point the config to your own:
+
+```bash
+php artisan vendor:publish --tag=trame-views
+```
+
+### Editor preview
+
+The canvas is an iframe rendering `trame.editor.preview.layout` with your CSS
+(`trame.editor.preview.vite`). Override it to add fonts, a site header or a dark background, so the canvas
+looks like the real page:
+
+```php
+// config/trame.php
+'editor' => [
+    'preview' => [
+        'layout' => 'trame.preview',
+        'vite' => ['resources/css/app.css'],
+    ],
+],
+```
+
+```blade
+{{-- resources/views/trame/preview.blade.php --}}
+<!DOCTYPE html>
+<html lang="{{ $locale }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    @if(! empty($vite))
+        @vite($vite)
+    @endif
+</head>
+<body class="bg-white font-sans antialiased">
+    {!! $content !!}
+
+    {!! $bridge ?? '' !!}
+</body>
+</html>
+```
+
+Variables: `$content` (document rendered in editing mode), `$locale`, `$vite` and `$bridge`.
+**Keep `{!! $bridge ?? '' !!}` before `</body>`:** it loads the canvas script (selection, drag and drop,
+in-place editing). Without it the preview shows but nothing can be selected.
+
+### Public pages
+
+`Trame::pageRoutes()` renders `trame::page`, which extends `trame.pages.layout`
+(default `trame::layouts.page`). Set your own layout; it must yield `title`, `description` and `content`:
+
+```blade
+{{-- resources/views/layouts/site.blade.php --}}
+<!DOCTYPE html>
+<html lang="{{ app()->getLocale() }}">
+<head>
+    <title>@yield('title')</title>
+    <meta name="description" content="@yield('description')">
+    @vite('resources/css/app.css')
+</head>
+<body>
+    @include('partials.header')
+    <main>@yield('content')</main>
+</body>
+</html>
+```
+
+For models using `HasTrame`, render in your own views with `{!! $model->renderTrame() !!}`.
+
+### Core blocks
+
+Core block views live in `resources/views/vendor/trame/blocks` once published. To change a core block's
+schema rather than its markup, register a block with the same `$type`.
 
 ## Editor API
 
