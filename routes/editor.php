@@ -19,18 +19,18 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::get('definitions', DefinitionsController::class)->name('definitions');
 
     Route::get('contents/{content}', [ContentController::class, 'show'])->name('contents.show');
-    Route::put('contents/{content}', [ContentController::class, 'update'])->name('contents.update');
-    Route::post('contents/{content}/publish', [ContentController::class, 'publish'])->name('contents.publish');
-    Route::post('contents/{content}/unpublish', [ContentController::class, 'unpublish'])->name('contents.unpublish');
+    Route::put('contents/{content}', [ContentController::class, 'update'])->name('contents.update')->middleware('can:trame.edit');
+    Route::post('contents/{content}/publish', [ContentController::class, 'publish'])->name('contents.publish')->middleware('can:trame.edit');
+    Route::post('contents/{content}/unpublish', [ContentController::class, 'unpublish'])->name('contents.unpublish')->middleware('can:trame.edit');
 
-    Route::post('preview', PreviewController::class)->name('preview');
+    Route::post('preview', PreviewController::class)->name('preview')->middleware('throttle:trame-preview');
 
     Route::get('media', [MediaController::class, 'index'])->name('media.index');
-    Route::post('media', [MediaController::class, 'store'])->name('media.store');
+    Route::post('media', [MediaController::class, 'store'])->name('media.store')->middleware('can:trame.edit');
     Route::get('media/{media}', [MediaController::class, 'show'])->name('media.show');
 
     Route::get('templates', [TemplateController::class, 'index'])->name('templates.index');
-    Route::post('templates', [TemplateController::class, 'store'])->name('templates.store');
-    Route::put('templates/{template}', [TemplateController::class, 'update'])->name('templates.update');
-    Route::delete('templates/{template}', [TemplateController::class, 'destroy'])->name('templates.destroy');
+    Route::post('templates', [TemplateController::class, 'store'])->name('templates.store')->middleware('can:trame.edit');
+    Route::put('templates/{template}', [TemplateController::class, 'update'])->name('templates.update')->middleware('can:trame.edit');
+    Route::delete('templates/{template}', [TemplateController::class, 'destroy'])->name('templates.destroy')->middleware('can:trame.edit');
 });

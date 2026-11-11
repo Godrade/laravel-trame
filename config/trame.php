@@ -70,8 +70,12 @@ return [
     | Editor API
     |--------------------------------------------------------------------------
     |
-    | Every editor route is also protected by the "trame.edit" gate, which
-    | denies everyone until you define it in your application.
+    | Every editor route is also protected by the "trame.view" gate, and every
+    | route that writes (save, publish, upload, templates) by "trame.edit".
+    | "trame.edit" denies everyone until you define it in your application;
+    | "trame.view" follows it unless you define it too (read-only editor:
+    | visitors can try everything, nothing is stored). Drop "auth" from the
+    | middleware to open the read-only editor to guests.
     |
     */
 
@@ -86,6 +90,9 @@ return [
         'preview' => [
             'layout' => 'trame::layouts.preview',
             'vite' => ['resources/css/app.css'],
+
+            // Preview renders per minute for read-only viewers (editors are not limited).
+            'viewer_per_minute' => 120,
         ],
     ],
 

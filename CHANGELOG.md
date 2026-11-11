@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `godrade/trame`. The project follows [Semantic Versioning](https://semver.org);
+All notable changes to `godrade/laravel-trame`. The project follows [Semantic Versioning](https://semver.org);
 before 1.0, minor versions may contain breaking changes.
 
 ## v0.1.0 (unreleased)
@@ -35,7 +35,8 @@ First release.
 
 ### Integration
 - `HasTrame` trait, `Page` model, opt-in public page routes (`Trame::pageRoutes()`).
-- `trame.edit` gate, denied by default.
+- `trame.edit` gate, denied by default; `trame.view` gate for a read-only editor (demo, reviewers): writes are
+  refused and hidden, previews are rate limited for viewers.
 - Media providers: `LocalDiskProvider` (default) and `SpatieMediaProvider`
   (`spatie/laravel-medialibrary` ^11.23).
 - `make:trame-block` generator, block discovery in `app/Trame/Blocks`.

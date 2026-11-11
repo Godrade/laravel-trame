@@ -65,7 +65,8 @@
                 <button type="button" x-show="errorCount" x-cloak class="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700"
                         @click="panel = 'structure'" x-text="t.errors_count.replace(':count', errorCount)"></button>
                 <span class="hidden text-xs text-zinc-500 lg:inline" x-text="status"></span>
-                <template x-if="!templateMode">
+                <span x-show="readOnly" x-cloak class="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-medium text-sky-800" :title="t.read_only_banner" x-text="t.read_only_badge"></span>
+                <template x-if="!templateMode && !readOnly">
                     <div class="flex items-center gap-2">
                         <button type="button" class="tr-btn-ghost text-xs" x-show="publishedAt" @click="unpublish()" x-text="t.unpublish"></button>
                         <button type="button" class="tr-btn-outline" :disabled="saving || !dirty" @click="save()" x-text="saving ? t.saving : t.save"></button>
@@ -75,11 +76,16 @@
                 <template x-if="templateMode">
                     <div class="flex items-center gap-2">
                         <button type="button" class="tr-btn-outline" @click="leaveTemplate()" x-text="t.back_to_page"></button>
-                        <button type="button" class="tr-btn-primary" :disabled="saving || !dirty" @click="saveTemplateContent()" x-text="saving ? t.saving : t.save_template"></button>
+                        <button type="button" class="tr-btn-primary" x-show="!readOnly" :disabled="saving || !dirty" @click="saveTemplateContent()" x-text="saving ? t.saving : t.save_template"></button>
                     </div>
                 </template>
             </div>
         </header>
+
+        {{-- Read-only banner: trame.view without trame.edit --}}
+        <div x-show="readOnly" x-cloak class="flex items-center gap-2 border-b border-sky-200 bg-sky-50 px-4 py-1.5 text-sm text-sky-900">
+            <span x-text="t.read_only_banner"></span>
+        </div>
 
         {{-- Template edit mode banner --}}
         <div x-show="templateMode" x-cloak class="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-4 py-1.5 text-sm text-amber-900">
@@ -169,7 +175,7 @@
                                         <span class="min-w-0 flex-1 truncate text-sm" x-text="template.name"></span>
                                         <button type="button" class="tr-btn-ghost px-1.5 py-0.5 text-xs" @click="insertTemplate(template)" x-text="t.insert" x-show="!templateMode"></button>
                                         <button type="button" class="tr-btn-ghost px-1.5 py-0.5 text-xs" @click="editTemplate(template)" x-text="t.edit" x-show="!templateMode"></button>
-                                        <button type="button" class="tr-icon-btn size-6 opacity-0 group-hover:opacity-100" @click="deleteTemplate(template)" :title="t.delete">✕</button>
+                                        <button type="button" class="tr-icon-btn size-6 opacity-0 group-hover:opacity-100" @click="deleteTemplate(template)" :title="t.delete" x-show="!readOnly">✕</button>
                                     </div>
                                 </template>
                             </section>
@@ -229,7 +235,7 @@
                             <button type="button" class="tr-icon-btn" :disabled="selected.position === 0" @click="move(selectedId, -1)" :title="t.move_up">↑</button>
                             <button type="button" class="tr-icon-btn" :disabled="selected.position === selected.list.length - 1" @click="move(selectedId, 1)" :title="t.move_down">↓</button>
                             <button type="button" class="tr-icon-btn" @click="duplicate(selectedId)" :title="t.duplicate">⧉</button>
-                            <button type="button" class="tr-icon-btn" x-show="canTemplate(selected)" @click="openTemplateDialog(selectedId)" :title="t.save_as_template">◆</button>
+                            <button type="button" class="tr-icon-btn" x-show="canTemplate(selected) && !readOnly" @click="openTemplateDialog(selectedId)" :title="t.save_as_template">◆</button>
                             <button type="button" class="tr-icon-btn hover:text-rose-600" @click="remove(selectedId)" :title="t.delete">✕</button>
                         </div>
 
@@ -345,7 +351,7 @@
             <div class="flex max-h-full w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
                 <div class="flex items-center gap-3 border-b border-zinc-200 px-4 py-3">
                     <h2 class="me-auto text-sm font-semibold" x-text="t.media_library"></h2>
-                    <label class="tr-btn-primary cursor-pointer">
+                    <label class="tr-btn-primary cursor-pointer" x-show="!readOnly">
                         <span x-text="media.uploading ? t.uploading : t.upload"></span>
                         <input type="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif" multiple class="hidden"
                                @change="upload([...$event.target.files]); $event.target.value = ''" :disabled="media.uploading">

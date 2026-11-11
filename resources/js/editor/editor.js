@@ -47,6 +47,7 @@ export default function editor() {
         savedSnapshot: null,
 
         templates: [],
+        readOnly: cfg.canEdit === false,
         mediaCache: {},
         media: { open: false, field: null, ctx: null, items: [], page: 1, total: 0, loading: false, uploading: false },
         templateDialog: { open: false, nodeId: null, name: '', global: false },
@@ -86,7 +87,7 @@ export default function editor() {
 
             window.addEventListener('message', (event) => this.onFrameMessage(event));
             window.addEventListener('beforeunload', (event) => {
-                if (this.dirty || (pageState && this.snapshot() !== pageState.savedSnapshot)) {
+                if (!this.readOnly && (this.dirty || (pageState && this.snapshot() !== pageState.savedSnapshot))) {
                     event.preventDefault();
                     event.returnValue = '';
                 }
@@ -637,6 +638,10 @@ export default function editor() {
         },
 
         async saveTemplateContent() {
+            if (this.denyWrite()) {
+                return false;
+            }
+
             const mode = this.templateMode;
             const content = D.unwrapTemplate(mode.kind, this.doc);
 
@@ -992,6 +997,10 @@ export default function editor() {
         },
 
         async upload(files) {
+            if (this.denyWrite()) {
+                return false;
+            }
+
             if (!files?.length) {
                 return;
             }
@@ -1054,6 +1063,10 @@ export default function editor() {
         },
 
         async saveTemplate() {
+            if (this.denyWrite()) {
+                return false;
+            }
+
             const dialog = this.templateDialog;
             const entry = index.get(dialog.nodeId);
 
@@ -1114,6 +1127,10 @@ export default function editor() {
         },
 
         async deleteTemplate(template) {
+            if (this.denyWrite()) {
+                return false;
+            }
+
             if (!window.confirm(this.t.confirm_delete_template)) {
                 return;
             }
@@ -1142,7 +1159,21 @@ export default function editor() {
 
         /* --------------------------------------------------------- save/publish */
 
+        /** Read-only viewers keep their changes in the browser: every write explains why it is not sent. */
+        denyWrite() {
+            if (this.readOnly) {
+                this.notify(this.t.read_only_notice, 'info');
+            }
+
+            return this.readOnly;
+        },
+
+
         get status() {
+            if (this.readOnly) {
+                return this.dirty ? this.t.read_only_changes : '';
+            }
+
             if (this.templateMode) {
                 return this.saving ? this.t.saving : this.dirty ? this.t.unsaved : '';
             }
@@ -1163,6 +1194,10 @@ export default function editor() {
         },
 
         async save() {
+            if (this.denyWrite()) {
+                return false;
+            }
+
             if (this.saving) {
                 return false;
             }
@@ -1204,6 +1239,10 @@ export default function editor() {
         },
 
         async publish() {
+            if (this.denyWrite()) {
+                return false;
+            }
+
             if (this.publishing || (this.dirty && !(await this.save()))) {
                 return;
             }
@@ -1223,6 +1262,10 @@ export default function editor() {
         },
 
         async unpublish() {
+            if (this.denyWrite()) {
+                return false;
+            }
+
             try {
                 const result = await api.post(cfg.endpoints.unpublish);
                 this.publishedAt = result.published_at;

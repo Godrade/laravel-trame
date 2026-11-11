@@ -105,4 +105,9 @@ return [
     'inline_help' => 'Glisse un élément dans l’aperçu pour le placer. Double-clic sur un texte pour le modifier sur place.',
 
     'categories' => ['content' => 'Contenu', 'media' => 'Médias', 'layout' => 'Mise en page'],
+
+    'read_only_badge' => 'Lecture seule',
+    'read_only_banner' => 'Mode démo : essayez tout librement, rien n’est enregistré sur le serveur.',
+    'read_only_notice' => 'Mode démo : cette action est désactivée, vos modifications restent dans votre navigateur.',
+    'read_only_changes' => 'Modifications locales, non enregistrées',
 ];

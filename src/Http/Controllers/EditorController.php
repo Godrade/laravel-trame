@@ -8,6 +8,7 @@ use Godrade\Trame\Trame;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Gate;
 
 final class EditorController
 {
@@ -23,6 +24,8 @@ final class EditorController
                 'title' => $this->title($content),
                 'locale' => $localizer->current($request->query('locale')),
                 'returnUrl' => $this->returnUrl($request),
+                // Read-only viewers (trame.view without trame.edit) can try everything; nothing is sent back.
+                'canEdit' => Gate::allows('trame.edit'),
                 'endpoints' => [
                     'definitions' => route('trame.api.definitions'),
                     'content' => route('trame.api.contents.show', $content),

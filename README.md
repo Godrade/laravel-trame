@@ -15,7 +15,7 @@ Visual, grid-based, multilingual page builder for Laravel and Tailwind CSS v4.
 ## Installation
 
 ```bash
-composer require godrade/trame
+composer require godrade/laravel-trame
 php artisan migrate
 php artisan trame:sources
 ```
@@ -28,7 +28,7 @@ Import the package sources and the generated palette after Tailwind:
 ```css
 /* resources/css/app.css */
 @import "tailwindcss";
-@import "../../vendor/godrade/trame/resources/css/trame.css";
+@import "../../vendor/godrade/laravel-trame/resources/css/trame.css";
 @import "./trame-palette.css";
 ```
 
@@ -90,6 +90,23 @@ Every editor route is behind the `trame.edit` gate, which **denies everyone by d
 // AppServiceProvider::boot()
 Gate::define('trame.edit', fn (User $user) => $user->is_admin);
 ```
+
+#### Read-only editor
+
+A second gate, `trame.view`, opens the editor **without saving**: viewers can drag blocks, edit texts,
+switch devices and locales, but saving, publishing, uploading and template changes are refused (403) and
+hidden from the UI. Changes stay in the browser. By default `trame.view` follows `trame.edit`.
+
+```php
+// Reviewers: signed-in users can look, only admins can save.
+Gate::define('trame.view', fn (User $user) => true);
+
+// Public demo: also drop "auth" from trame.editor.middleware, and accept guests.
+Gate::define('trame.view', fn (?User $user) => true);
+```
+
+Read-only viewers load the **draft**, and each preview renders on the server: they are limited to
+`trame.editor.preview.viewer_per_minute` previews a minute (120 by default).
 
 ## Visual editor
 
@@ -447,7 +464,8 @@ schema rather than its markup, register a block with the same `$type`.
 
 ## Editor API
 
-Prefix `config('trame.editor.prefix')`, middleware `web`, `auth`, `can:trame.edit`.
+Prefix `config('trame.editor.prefix')`, middleware `web`, `auth`, `can:trame.view`. Routes that write
+(PUT, publish, unpublish, media upload, template changes) also require `can:trame.edit`.
 
 | Method | URI | |
 |---|---|---|

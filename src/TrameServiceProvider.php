@@ -9,7 +9,10 @@ use Godrade\Trame\Console\SourcesCommand;
 use Godrade\Trame\Media\MediaProvider;
 use Godrade\Trame\Support\HtmlSanitizer;
 use Godrade\Trame\Support\Localizer;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
@@ -37,6 +40,7 @@ class TrameServiceProvider extends ServiceProvider
         }
 
         $this->registerGates();
+        $this->registerRateLimiters();
         $this->registerEditorRoutes();
 
         if ($this->app->runningInConsole()) {
@@ -61,6 +65,28 @@ class TrameServiceProvider extends ServiceProvider
         if (! Gate::has('trame.edit')) {
             Gate::define('trame.edit', fn ($user = null) => false);
         }
+
+        // "trame.view" opens the editor read-only: everything can be tried, nothing is stored.
+        // By default only editors can view; define it in the app to open a demo or a review role.
+        if (! Gate::has('trame.view')) {
+            Gate::define('trame.view', fn ($user = null) => Gate::forUser($user)->allows('trame.edit'));
+        }
+    }
+
+    /**
+     * Previews render a posted document on every edit: editors are not limited,
+     * read-only viewers get a per-minute budget (trame.editor.preview.viewer_per_minute).
+     */
+    private function registerRateLimiters(): void
+    {
+        RateLimiter::for('trame-preview', function (Request $request): Limit {
+            if (Gate::forUser($request->user())->allows('trame.edit')) {
+                return Limit::none();
+            }
+
+            return Limit::perMinute((int) config('trame.editor.preview.viewer_per_minute', 120))
+                ->by($request->user()?->getAuthIdentifier() ?? $request->ip());
+        });
     }
 
     private function registerEditorRoutes(): void
@@ -72,7 +98,7 @@ class TrameServiceProvider extends ServiceProvider
         }
 
         Route::prefix($config->get('trame.editor.prefix', 'trame'))
-            ->middleware([...$config->get('trame.editor.middleware', ['web', 'auth']), 'can:trame.edit'])
+            ->middleware([...$config->get('trame.editor.middleware', ['web', 'auth']), 'can:trame.view'])
             ->name('trame.')
             ->group(__DIR__.'/../routes/editor.php');
     }

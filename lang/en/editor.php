@@ -105,4 +105,9 @@ return [
     'inline_help' => 'Drag an item into the preview to place it. Double-click a text to edit it in place.',
 
     'categories' => ['content' => 'Content', 'media' => 'Media', 'layout' => 'Layout'],
+
+    'read_only_badge' => 'Read-only',
+    'read_only_banner' => 'Demo mode: try everything freely, nothing is saved on the server.',
+    'read_only_notice' => 'Demo mode: this action is disabled, your changes stay in your browser.',
+    'read_only_changes' => 'Local changes, not saved',
 ];

@@ -1,5 +1,5 @@
 {
-    "name": "godrade/trame",
+    "name": "godrade/laravel-trame",
     "description": "Visual, grid-based, multilingual page builder for Laravel and Tailwind CSS v4.",
     "keywords": ["laravel", "page-builder", "tailwindcss", "blocks", "cms", "multilingual"],
     "license": "MIT",
