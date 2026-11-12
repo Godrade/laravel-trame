@@ -49,8 +49,15 @@ final class EditorController
                     'mediaShow' => route('trame.api.media.show', ['media' => '__ID__']),
                     'templates' => route('trame.api.templates.index'),
                     'template' => route('trame.api.templates.update', ['template' => '__ID__']),
+                    'revisions' => route('trame.api.revisions.index', $content),
+                    'revisionRestore' => route('trame.api.revisions.restore', ['content' => $content, 'revision' => '__ID__']),
+                    'links' => route('trame.api.links'),
                 ],
-                'strings' => trans('trame::editor'),
+                // One lang file per editor feature (editor_history, editor_content, editor_checks).
+                'strings' => array_merge(...array_map(
+                    fn (string $file) => (array) trans("trame::{$file}"),
+                    ['editor', 'editor_history', 'editor_content', 'editor_checks'],
+                )),
             ],
         ]);
     }

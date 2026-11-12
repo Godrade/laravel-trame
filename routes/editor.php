@@ -4,8 +4,10 @@ use Godrade\Trame\Http\Controllers\AssetController;
 use Godrade\Trame\Http\Controllers\ContentController;
 use Godrade\Trame\Http\Controllers\DefinitionsController;
 use Godrade\Trame\Http\Controllers\EditorController;
+use Godrade\Trame\Http\Controllers\LinkController;
 use Godrade\Trame\Http\Controllers\MediaController;
 use Godrade\Trame\Http\Controllers\PreviewController;
+use Godrade\Trame\Http\Controllers\RevisionController;
 use Godrade\Trame\Http\Controllers\TemplateController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +24,11 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::put('contents/{content}', [ContentController::class, 'update'])->name('contents.update')->middleware('can:trame.edit');
     Route::post('contents/{content}/publish', [ContentController::class, 'publish'])->name('contents.publish')->middleware('can:trame.edit');
     Route::post('contents/{content}/unpublish', [ContentController::class, 'unpublish'])->name('contents.unpublish')->middleware('can:trame.edit');
+
+    Route::get('contents/{content}/revisions', [RevisionController::class, 'index'])->name('revisions.index');
+    Route::post('contents/{content}/revisions/{revision}/restore', [RevisionController::class, 'restore'])->name('revisions.restore')->middleware('can:trame.edit');
+
+    Route::get('links', [LinkController::class, 'index'])->name('links');
 
     Route::post('preview', PreviewController::class)->name('preview')->middleware('throttle:trame-preview');
 

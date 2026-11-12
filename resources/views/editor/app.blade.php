@@ -71,9 +71,11 @@
                 <button type="button" x-show="errorCount" x-cloak class="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700"
                         @click="panel = 'structure'" x-text="t.errors_count.replace(':count', errorCount)"></button>
                 <span class="hidden text-xs text-zinc-500 lg:inline" x-text="status"></span>
+                @include('trame::editor.partials.features.toolbar-status')
                 <span x-show="readOnly" x-cloak class="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-medium text-sky-800" :title="t.read_only_banner" x-text="t.read_only_badge"></span>
                 <template x-if="!templateMode && !readOnly">
                     <div class="flex items-center gap-2">
+                        @include('trame::editor.partials.features.toolbar-actions')
                         <button type="button" class="tr-btn-ghost text-xs" x-show="publishedAt" @click="unpublish()" x-text="t.unpublish"></button>
                         <button type="button" class="tr-btn-outline" :disabled="saving || !dirty" @click="save()" x-text="saving ? t.saving : t.save"></button>
                         <button type="button" class="tr-btn-primary" :disabled="publishing || saving || (!dirty && publishedAt && !hasUnpublished)" @click="publish()" x-text="t.publish"></button>
@@ -117,6 +119,7 @@
 
                     {{-- Add --}}
                     <div x-show="panel === 'add'" class="space-y-5">
+                        @include('trame::editor.partials.features.palette-top')
                         <section class="space-y-2">
                             <h3 class="tr-heading" x-text="t.sections"></h3>
                             <div class="grid grid-cols-3 gap-2">
@@ -162,6 +165,7 @@
                                 <span class="size-2 shrink-0 rounded-sm"
                                       :class="{ section: 'bg-indigo-500', row: 'bg-sky-500', column: 'bg-emerald-500', block: 'bg-orange-500', global: 'bg-amber-500' }[item.kind]"></span>
                                 <span class="truncate" x-text="item.label"></span>
+                                @include('trame::editor.partials.features.tree-badges')
                                 <span x-show="item.error" class="ms-auto size-2 shrink-0 rounded-full bg-rose-500"></span>
                             </button>
                         </template>
@@ -227,6 +231,11 @@
                     <div class="p-6 text-center">
                         <p class="text-sm font-medium" x-text="t.nothing_selected"></p>
                         <p class="mt-1 text-xs leading-relaxed text-zinc-500" x-text="t.nothing_selected_help"></p>
+                    </div>
+                </template>
+                <template x-if="!selected">
+                    <div class="min-h-0 flex-1 overflow-y-auto border-t border-zinc-100 p-3">
+                        @include('trame::editor.partials.features.panel-checks')
                     </div>
                 </template>
 
@@ -410,6 +419,8 @@
                 </div>
             </form>
         </div>
+
+        @include('trame::editor.partials.features.modals')
 
         {{-- ============================================================ Toast --}}
         <div x-show="toast" x-cloak x-transition.opacity class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">

@@ -1,5 +1,6 @@
 import { api } from './api.js';
 import * as D from './document.js';
+import { withFeatures } from './features/index.js';
 
 /*
  * Non-reactive state kept outside Alpine: the node index (rebuilt after each
@@ -71,7 +72,7 @@ function initialMode(cfg) {
 export default function editor() {
     const cfg = window.TrameEditor;
 
-    return {
+    const component = {
         cfg,
         t: cfg.strings,
 
@@ -138,6 +139,7 @@ export default function editor() {
                 }
 
                 this.ready = true;
+                this.runFeatureInits();
             } catch (error) {
                 this.loadError = error.message;
 
@@ -173,6 +175,12 @@ export default function editor() {
             this.savedSnapshot = this.snapshot();
             this.dirty = false;
             this.reindex();
+            this.emit('loaded', { content });
+        },
+
+        /** Events for feature modules (features/*.js): loaded, changed, saved, published. */
+        emit(name, detail = {}) {
+            window.dispatchEvent(new CustomEvent(`trame:${name}`, { detail }));
         },
 
         reindex() {
@@ -229,6 +237,7 @@ export default function editor() {
             }
 
             this.schedulePreview();
+            this.emit('changed', { dirty: this.dirty });
         },
 
         undo() {
@@ -1325,7 +1334,12 @@ export default function editor() {
             return this.hasUnpublished ? this.t.unpublished_changes : this.t.published;
         },
 
-        async save() {
+        /** options.silent: no toast and no read-only notice (used by autosave). */
+        async save(options = {}) {
+            if (options.silent && this.readOnly) {
+                return false;
+            }
+
             if (this.denyWrite()) {
                 return false;
             }
@@ -1346,12 +1360,23 @@ export default function editor() {
                 this.errors = {};
                 this.savedSnapshot = sent;
                 this.dirty = this.snapshot() !== sent;
-                this.notify(this.t.saved, 'success');
+                this.emit('saved', { result, silent: options.silent === true });
+
+                if (options.silent !== true) {
+                    this.notify(this.t.saved, 'success');
+                }
 
                 return true;
             } catch (error) {
                 if (error.status === 422 && error.payload?.errors) {
                     this.errors = error.payload.errors;
+                    this.emit('save-failed', { status: 422, silent: options.silent === true });
+
+                    // A silent save (autosave) only records the errors: the panel shows them, nothing jumps.
+                    if (options.silent) {
+                        return false;
+                    }
+
                     this.panel = 'structure';
                     const first = this.errorMap.keys().next().value;
 
@@ -1385,6 +1410,7 @@ export default function editor() {
                 const result = await api.post(cfg.endpoints.publish);
                 this.publishedAt = result.published_at;
                 this.hasUnpublished = result.has_unpublished_changes;
+                this.emit('published', { result });
                 this.notify(this.t.publish_done, 'success');
             } catch (error) {
                 this.fail(error);
@@ -1451,4 +1477,6 @@ export default function editor() {
             this.notify(`${this.t.error}${error.status ? ` ${error.status}` : ''} : ${error.message}`, 'error');
         },
     };
+
+    return withFeatures(component, { cfg, D, api });
 }
