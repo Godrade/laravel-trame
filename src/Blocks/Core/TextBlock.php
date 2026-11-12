@@ -31,7 +31,7 @@ final class TextBlock extends Block
             Field::richText('content')->translatable()->required(),
             // "readable" keeps lines under ~65 characters, whatever the column width.
             Field::select('width')->options(array_keys(self::WIDTHS))->default('readable')->advanced(),
-            Field::select('size')->options(array_keys(self::SIZES))->default('base')->advanced(),
+            Field::select('size')->options(['base' => __('trame::options.labels.normal'), 'lead' => __('trame::options.labels.lead')])->default('base')->advanced(),
             Field::select('align')->options(Tokens::keys(Tokens::ALIGN))->default('start')->responsive(),
             Field::color('color')->advanced(),
         ];

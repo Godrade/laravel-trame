@@ -114,4 +114,5 @@ return [
     'mode_advanced' => 'Avancé',
     'mode_help' => 'Le mode simple masque les réglages de mise en page et d’apparence.',
     'per_screen_locked' => 'Réglé différemment selon l’écran : modifiable en mode avancé.',
+    'preview_title' => 'Aperçu de la page',
 ];

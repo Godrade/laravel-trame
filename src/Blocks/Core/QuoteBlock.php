@@ -41,7 +41,7 @@ final class QuoteBlock extends Block
             Field::textarea('quote')->translatable()->required()->max(1000),
             Field::text('author')->max(120),
             Field::text('source')->translatable()->max(160),
-            Field::select('size')->options(array_keys(self::SIZES))->default('md')->advanced(),
+            Field::select('size')->options(['md' => __('trame::options.labels.normal'), 'lg' => __('trame::options.labels.highlighted')])->default('md')->advanced(),
             Field::color('color')->advanced(),
         ];
     }

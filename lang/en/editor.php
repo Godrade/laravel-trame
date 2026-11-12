@@ -114,4 +114,5 @@ return [
     'mode_advanced' => 'Advanced',
     'mode_help' => 'Simple mode hides layout and appearance settings.',
     'per_screen_locked' => 'Set per screen: edit it in advanced mode.',
+    'preview_title' => 'Page preview',
 ];

@@ -539,7 +539,7 @@ final class Field
             'translatable' => $this->translatable,
             'responsive' => $this->responsive ?: null,
             'options' => $this->type === 'select'
-                ? array_map(fn ($value, $label) => ['value' => $value, 'label' => $label], array_keys($this->options), $this->options)
+                ? array_map(fn ($value, $label) => ['value' => $value, 'label' => $this->optionLabel($value, $label)], array_keys($this->options), $this->options)
                 : null,
             'palette' => $this->type === 'color' ? Palette::colors() : null,
             'allow_custom' => $this->type === 'color' ? $this->allowCustomColor : null,
@@ -618,6 +618,30 @@ final class Field
         }
 
         return $this->default;
+    }
+
+    /**
+     * Options given as a plain list use their value as label: translate it with
+     * trame::options.{field}.{value} (meaning specific to the field), then
+     * trame::options.{value}. Explicit labels are kept as given.
+     */
+    private function optionLabel(int|string $value, string $label): string
+    {
+        if ($label !== (string) $value) {
+            return $label;
+        }
+
+        foreach (["trame::options.{$this->name}.{$value}", "trame::options.{$value}"] as $key) {
+            if (Lang::has($key)) {
+                $translation = __($key);
+
+                if (is_string($translation)) {
+                    return $translation;
+                }
+            }
+        }
+
+        return $label;
     }
 
     private function defaultLabel(): string

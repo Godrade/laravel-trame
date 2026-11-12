@@ -105,10 +105,19 @@ function kindOf(element) {
     return element?.dataset.trameNode ?? 'block';
 }
 
+/** Sent by the editor ("trame:labels"): node and block names, action titles, in its language. */
+let labels = { kinds: {}, blocks: {}, actions: {} };
+
 function labelOf(element) {
     const kind = kindOf(element);
 
-    return kind === 'block' ? element.dataset.trameType ?? 'block' : kind;
+    if (kind === 'block') {
+        const type = element.dataset.trameType ?? 'block';
+
+        return labels.blocks[type] ?? type;
+    }
+
+    return labels.kinds[kind] ?? kind;
 }
 
 function place(box, element) {
@@ -554,6 +563,19 @@ window.addEventListener('message', (event) => {
         } else {
             applyRender(message);
         }
+    }
+
+    if (message.type === 'trame:labels') {
+        labels = { kinds: {}, blocks: {}, actions: {}, ...message.labels };
+        selectedBox.querySelectorAll('[data-action]').forEach((button) => {
+            const title = labels.actions?.[button.dataset.action];
+
+            if (title) {
+                button.title = title;
+                button.setAttribute('aria-label', title);
+            }
+        });
+        redraw();
     }
 
     if (message.type === 'trame:select') {

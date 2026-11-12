@@ -37,7 +37,7 @@ final class ButtonBlock extends Block
             Field::url('url')->translatable()->required(),
             Field::toggle('new_tab'),
             Field::select('variant')->options(array_keys(self::VARIANTS))->default('solid'),
-            Field::select('size')->options(array_keys(self::SIZES))->default('md')->advanced(),
+            Field::select('size')->options(['md' => __('trame::options.labels.normal'), 'lg' => __('trame::options.labels.large')])->default('md')->advanced(),
             // No default: solid buttons use the theme accent (--trame-accent), others the text colour.
             Field::color('color')->advanced(),
             Field::select('align')->options(Tokens::keys(Tokens::JUSTIFY))->default('start')->responsive(),

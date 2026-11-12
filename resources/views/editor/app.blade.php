@@ -195,7 +195,7 @@
                 <div class="absolute inset-6 flex justify-center">
                     <div class="overflow-hidden rounded-md bg-white shadow-lg ring-1 ring-zinc-900/5"
                          :style="`width: ${frameWidth * scale}px; height: ${frameHeight * scale}px`">
-                        <iframe x-ref="frame" :src="frameSrc" title="Preview"
+                        <iframe x-ref="frame" :src="frameSrc" :title="t.preview_title"
                                 class="origin-top-left border-0 bg-white"
                                 :style="`width: ${frameWidth}px; height: ${frameHeight}px; transform: scale(${scale})`"></iframe>
                     </div>

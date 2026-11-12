@@ -126,6 +126,10 @@ export default function editor() {
 
                 this.defs = defs;
                 this.blockDefs = Object.fromEntries(defs.blocks.map((block) => [block.type, block]));
+
+                if (this.frameReady) {
+                    this.postFrame({ type: 'trame:labels', labels: this.frameLabels() });
+                }
                 this.templates = templates.data ?? [];
                 this.load(content);
 
@@ -281,6 +285,21 @@ export default function editor() {
             }
         },
 
+        /** Names shown by the canvas on the selection bar, in the editor language. */
+        frameLabels() {
+            return {
+                kinds: { section: this.t.section, row: this.t.row, column: this.t.column, block: this.t.block, global: this.t.global },
+                blocks: Object.fromEntries((this.defs?.blocks ?? []).map((block) => [block.type, block.label])),
+                actions: {
+                    parent: this.t.select_parent,
+                    up: this.t.move_up,
+                    down: this.t.move_down,
+                    duplicate: this.t.duplicate,
+                    delete: this.t.delete,
+                },
+            };
+        },
+
         postFrame(message) {
             this.$refs.frame?.contentWindow?.postMessage(message, window.location.origin);
         },
@@ -295,6 +314,7 @@ export default function editor() {
             switch (message.type) {
                 case 'trame:ready':
                     this.frameReady = true;
+                    this.postFrame({ type: 'trame:labels', labels: this.frameLabels() });
                     this.refreshPreview();
                     break;
                 case 'trame:select':
