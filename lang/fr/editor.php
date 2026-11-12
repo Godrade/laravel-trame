@@ -115,4 +115,8 @@ return [
     'mode_help' => 'Le mode simple masque les réglages de mise en page et d’apparence.',
     'per_screen_locked' => 'Réglé différemment selon l’écran : modifiable en mode avancé.',
     'preview_title' => 'Aperçu de la page',
+    'locked_badge' => 'Verrouillée',
+    'locked_notice' => 'Cette section est verrouillée : vous pouvez modifier ses textes et images, pas sa structure.',
+    'lock_structure' => 'Verrouiller la structure',
+    'lock_structure_help' => 'En mode simple, la section ne peut être ni déplacée ni supprimée, et ses lignes, colonnes et blocs restent en place. Textes et images restent modifiables.',
 ];

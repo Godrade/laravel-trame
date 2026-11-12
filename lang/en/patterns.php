@@ -1,0 +1,61 @@
+<?php
+
+// Copy of the ready-made sections. Replace it with your own once the section is inserted.
+return [
+    'hero' => [
+        'label' => 'Hero banner',
+        'description' => 'Large title, introduction and two buttons on a dark background.',
+        'title' => 'Clear support, from the first conversation to delivery',
+        'lead' => 'We listen to what you need, suggest a solution that fits your budget, then put it in place with you.',
+        'primary' => 'Request a quote',
+        'secondary' => 'See our work',
+    ],
+    'features' => [
+        'label' => 'Three strengths',
+        'description' => 'A title and three cards to present what you do best.',
+        'title' => 'What you get from us',
+        'item1_title' => 'One point of contact',
+        'item1_text' => 'The same person follows your project from start to finish and answers your questions within one working day.',
+        'item2_title' => 'Deadlines we keep',
+        'item2_text' => 'The schedule is agreed with you at the start. If something delays the project, you hear about it right away.',
+        'item3_title' => 'A price set in advance',
+        'item3_text' => 'The quote lists every item. Nothing is added to the invoice without your written approval.',
+    ],
+    'testimonials' => [
+        'label' => 'Testimonials',
+        'description' => 'A title and two customer quotes.',
+        'title' => 'They trusted us',
+        'quote1' => 'The project was delivered on the agreed date and matches exactly what we described at the start.',
+        'quote1_author' => 'Claire Martin',
+        'quote1_source' => 'Office manager, Les Jardins du Parc association',
+        'quote2' => 'We liked having the same person on the phone every time, with precise answers to each question.',
+        'quote2_author' => 'Julien Bernard',
+        'quote2_source' => 'Owner, Bernard Bakery',
+    ],
+    'faq' => [
+        'label' => 'Frequently asked questions',
+        'description' => 'A title and three questions with their answers.',
+        'title' => 'Frequently asked questions',
+        'q1' => 'How long does it take?',
+        'a1' => 'For a standard project, allow four to six weeks from the day the quote is approved. We confirm the exact timeline before we start.',
+        'q2' => 'How does payment work?',
+        'a2' => 'A 30% deposit is requested when you order, and the balance is paid on delivery. Invoices are sent by email.',
+        'q3' => 'Can I change my request along the way?',
+        'a3' => 'Yes, as long as the work concerned has not started. We tell you how the change affects the price and the timeline before we do it.',
+    ],
+    'cta' => [
+        'label' => 'Call to action',
+        'description' => 'Centred title, sentence and button on a coloured background.',
+        'title' => 'Let’s talk about your project',
+        'text' => 'Describe what you need in a few lines. We reply within two working days.',
+        'button' => 'Contact us',
+    ],
+    'image_text' => [
+        'label' => 'Image and text',
+        'description' => 'An image on the left, a title, text and a button on the right.',
+        'title' => 'A team close to you',
+        'text' => 'For more than ten years we have worked with craftspeople, shops and associations in the region. We know their constraints and we keep the language simple.',
+        'button' => 'Get to know us',
+        'image_alt' => 'Our team in front of the workshop',
+    ],
+];

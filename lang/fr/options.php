@@ -50,4 +50,6 @@ return [
     'width' => ['full' => 'Toute la colonne'],
     // Explicit labels used by core blocks (sizes whose meaning depends on the block).
     'labels' => ['normal' => 'Normale', 'large' => 'Grande', 'highlighted' => 'Mise en avant', 'lead' => 'Chapô'],
+    'bg_overlay_opacity' => ['0' => 'Aucun', '20' => '20 %', '40' => '40 %', '60' => '60 %', '80' => '80 %'],
+    'bg_position' => ['top' => 'Haut', 'center' => 'Centre', 'bottom' => 'Bas'],
 ];

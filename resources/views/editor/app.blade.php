@@ -36,7 +36,11 @@
                 {{-- Locales --}}
                 <div class="tr-seg" x-show="defs.locales.length > 1">
                     <template x-for="code in defs.locales" :key="code">
-                        <button type="button" class="uppercase" :aria-pressed="locale === code" @click="locale = code" x-text="code"></button>
+                        <button type="button" class="inline-flex items-center gap-1 whitespace-nowrap uppercase" :aria-pressed="locale === code" @click="locale = code"
+                                :title="missingCount(code) ? t.check_untranslated_count.replace(':count', missingCount(code)).replace(':locale', code.toUpperCase()) : null">
+                            <span x-text="code"></span>
+                            <span x-show="missingCount(code)" class="ms-0.5 rounded-full bg-amber-100 px-1 text-[10px] font-semibold text-amber-800" x-text="missingCount(code)"></span>
+                        </button>
                     </template>
                 </div>
 
@@ -247,11 +251,12 @@
                                   :class="{ section: 'bg-indigo-500', row: 'bg-sky-500', column: 'bg-emerald-500', block: 'bg-orange-500', global: 'bg-amber-500' }[selected.kind]"></span>
                             <span class="me-auto truncate text-sm font-semibold" x-text="kindLabel(selected)"></span>
                             <button type="button" class="tr-icon-btn" x-show="selected.parentId" @click="selectParent()" :title="t.select_parent">↖</button>
-                            <button type="button" class="tr-icon-btn" :disabled="selected.position === 0" @click="move(selectedId, -1)" :title="t.move_up">↑</button>
-                            <button type="button" class="tr-icon-btn" :disabled="selected.position === selected.list.length - 1" @click="move(selectedId, 1)" :title="t.move_down">↓</button>
-                            <button type="button" class="tr-icon-btn" @click="duplicate(selectedId)" :title="t.duplicate">⧉</button>
+                            <span x-show="isLocked(selectedId)" class="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800" :title="t.locked_notice" x-text="t.locked_badge"></span>
+                            <button type="button" class="tr-icon-btn" x-show="!isLocked(selectedId)" :disabled="selected.position === 0" @click="move(selectedId, -1)" :title="t.move_up">↑</button>
+                            <button type="button" class="tr-icon-btn" x-show="!isLocked(selectedId)" :disabled="selected.position === selected.list.length - 1" @click="move(selectedId, 1)" :title="t.move_down">↓</button>
+                            <button type="button" class="tr-icon-btn" x-show="!isLocked(selectedId)" @click="duplicate(selectedId)" :title="t.duplicate">⧉</button>
                             <button type="button" class="tr-icon-btn" x-show="canTemplate(selected) && !readOnly && !simple" @click="openTemplateDialog(selectedId)" :title="t.save_as_template">◆</button>
-                            <button type="button" class="tr-icon-btn hover:text-rose-600" @click="remove(selectedId)" :title="t.delete">✕</button>
+                            <button type="button" class="tr-icon-btn hover:text-rose-600" x-show="!isLocked(selectedId)" @click="remove(selectedId)" :title="t.delete">✕</button>
                         </div>
 
                         <div class="min-h-0 flex-1 space-y-5 overflow-y-auto p-3">
@@ -270,7 +275,22 @@
                             </template>
 
                             {{-- Section: add row --}}
-                            <template x-if="selected.kind === 'section'">
+                            {{-- Section: structure lock, set in advanced mode, applied in simple mode --}}
+                            <template x-if="selected.kind === 'section' && !simple">
+                                <div class="flex items-start justify-between gap-3 rounded-md bg-zinc-50 p-2.5">
+                                    <div>
+                                        <p class="text-sm font-medium" x-text="t.lock_structure"></p>
+                                        <p class="mt-0.5 text-xs leading-relaxed text-zinc-500" x-text="t.lock_structure_help"></p>
+                                    </div>
+                                    <button type="button" role="switch" :aria-checked="selected.node.settings?.locked === true" @click="toggleLocked(selectedId)"
+                                            class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition"
+                                            :class="selected.node.settings?.locked === true ? 'bg-indigo-600' : 'bg-zinc-300'">
+                                        <span class="inline-block size-4 rounded-full bg-white shadow transition" :class="selected.node.settings?.locked === true ? 'translate-x-4.5' : 'translate-x-0.5'"></span>
+                                    </button>
+                                </div>
+                            </template>
+
+                            <template x-if="selected.kind === 'section' && !isLocked(selectedId)">
                                 <div class="space-y-2">
                                     <h3 class="tr-heading" x-text="t.add_row"></h3>
                                     <div class="grid grid-cols-3 gap-2">
@@ -286,7 +306,7 @@
                             </template>
 
                             {{-- Row: layout presets --}}
-                            <template x-if="selected.kind === 'row'">
+                            <template x-if="selected.kind === 'row' && !isLocked(selectedId)">
                                 <div class="space-y-2">
                                     <h3 class="tr-heading" x-text="t.layout"></h3>
                                     <div class="grid grid-cols-3 gap-2">

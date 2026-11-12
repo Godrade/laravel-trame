@@ -1,7 +1,27 @@
 {{-- Control for one field. $f: Alpine variable holding the field; $c: extra argument (', item' inside a repeater item); $nested: inside an item. --}}
-<template x-if="{{ $f }}.type === 'text' || {{ $f }}.type === 'url'">
-    <input type="text" class="tr-input" :value="value({{ $f }}{{ $c }})" :placeholder="placeholder({{ $f }}{{ $c }}) || ({{ $f }}.type === 'url' ? 'https://… /page #ancre' : '')"
-           :maxlength="{{ $f }}.max ?? ({{ $f }}.type === 'url' ? 2048 : 255)" @input="setValue({{ $f }}, $event.target.value{{ $c }})">
+<template x-if="{{ $f }}.type === 'text'">
+    <input type="text" class="tr-input" :value="value({{ $f }}{{ $c }})" :placeholder="placeholder({{ $f }}{{ $c }})"
+           :maxlength="{{ $f }}.max ?? 255" @input="setValue({{ $f }}, $event.target.value{{ $c }})">
+</template>
+
+{{-- Link: a typed URL, or a page of the site ("page:12", feature "links"). --}}
+<template x-if="{{ $f }}.type === 'url'">
+    <div>
+        <template x-if="isPageRef(value({{ $f }}{{ $c }}))">
+            <div class="flex items-center gap-1 rounded-md border border-zinc-300 bg-zinc-50 py-1 ps-2.5 pe-1">
+                <span class="min-w-0 flex-1 truncate text-sm text-zinc-800" x-text="linkTitle(value({{ $f }}{{ $c }}))"></span>
+                <button type="button" class="tr-btn-ghost" @click="openLinks({{ $f }}{{ $c }})" x-text="t.link_change"></button>
+                <button type="button" class="tr-btn-ghost" @click="clearLink({{ $f }}{{ $c }})" x-text="t.remove"></button>
+            </div>
+        </template>
+        <template x-if="!isPageRef(value({{ $f }}{{ $c }}))">
+            <div class="flex gap-1.5">
+                <input type="text" class="tr-input min-w-0 flex-1" :value="value({{ $f }}{{ $c }})" :placeholder="placeholder({{ $f }}{{ $c }}) || 'https://… /page #ancre'"
+                       :maxlength="{{ $f }}.max ?? 2048" @input="setValue({{ $f }}, $event.target.value{{ $c }})">
+                <button type="button" class="tr-btn-outline shrink-0" @click="openLinks({{ $f }}{{ $c }})" x-text="t.links_page"></button>
+            </div>
+        </template>
+    </div>
 </template>
 
 <template x-if="{{ $f }}.type === 'textarea'">

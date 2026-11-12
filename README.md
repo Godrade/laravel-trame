@@ -160,7 +160,20 @@ build (`trame.editor.preview.vite`), so what you see is what is published.
 - Mobile / tablet / desktop preview, per-breakpoint column widths
 - Per-locale editing of translatable fields, fallback shown as placeholder
 - Undo / redo (⌘Z / ⇧⌘Z), save (⌘S), publish, optimistic locking
+- **Autosave** of the draft 3 seconds after the last change, and when the tab is hidden
+- **History**: every save and publication is kept (`trame.revisions`); restore any version, or go back to
+  the published one
 - Media library, reusable and global templates
+- **Starter sections** (hero, features, testimonials, FAQ, call to action, image and text) inserted in one
+  click, in every configured locale
+- **Internal links**: pick a page for any link field; the reference (`page:12`) keeps working when the slug
+  changes
+- **Locked sections**: in advanced mode, lock a section's structure; in simple mode its text and images stay
+  editable, but it cannot be moved, deleted or restructured
+- **Checks** (right panel when nothing is selected): blocks to translate in the edited locale (also counted
+  on the locale switcher and marked in the structure tree), images without alternative text, heading levels
+  that skip a step or repeat the h1
+- Empty blocks show a hint in the canvas until they are filled
 
 To change the canvas markup, see [Editor preview](#editor-preview).
 
@@ -519,6 +532,15 @@ Validation errors use full paths: `document.sections.0.rows.0.columns.1.blocks.2
 Implement `Godrade\Trame\Media\MediaProvider` and set `trame.media.provider`.
 `LocalDiskProvider` (Laravel disk + `trame_media` table) is the default.
 
+Images are served with `srcset` and a `sizes` attribute computed from the column width. `LocalDiskProvider`
+stores resized copies on upload (`trame.media.widths`, default 480, 960 and 1600 px; jpeg, png and webp;
+skipped above `trame.media.max_pixels`). The Spatie adapter uses Media Library's responsive images.
+
+### Section backgrounds
+
+Sections take a background image (`bg_image`, available in simple mode), an optional colour overlay with
+its opacity, the image position and a text colour (advanced mode).
+
 ### Spatie Media Library
 
 ```bash
@@ -561,6 +583,31 @@ class TrameMedia extends MediaLibrary
 ```
 
 Switching providers does not migrate existing files: image blocks keep the ids of the previous provider.
+
+## Internal links
+
+A link field accepts `page:{id}`. It is resolved for the rendered locale by
+`Godrade\Trame\Links\LinkResolver` (default `PageLinkResolver`, Trame's `Page` model). With your own routes,
+tell Trame how to build a page URL:
+
+```php
+// config/trame.php
+'links' => [
+    'page_url' => fn (Page $page, string $locale) => route('page.show', [
+        'locale' => $locale,
+        'slug' => $page->getTranslation('slug', $locale),
+    ]),
+],
+```
+
+Bind your own resolver (`trame.links.resolver`) to link to other models. Published renders are cached:
+after renaming a slug, run `php artisan trame:clear` so pages linking to it pick up the new URL.
+
+## Starter sections
+
+The editor offers ready-made sections. Disable them with `trame.patterns.defaults` and add yours with
+`trame.patterns.extra`: classes implementing `Godrade\Trame\Patterns\Pattern` (`key()`, `label()`,
+`description()`, `content(array $locales, string $fallback): array` returning a section node).
 
 ## Cache
 

@@ -51,4 +51,8 @@ return [
     'shadow' => 'Ombre',
     'class' => 'Classe CSS',
     'class_help' => 'Classes de la feuille de style du site, séparées par des espaces.',
+    'bg_image' => "Image de fond",
+    'bg_overlay' => "Couleur du voile",
+    'bg_overlay_opacity' => "Opacité du voile",
+    'bg_position' => "Position de l'image",
 ];

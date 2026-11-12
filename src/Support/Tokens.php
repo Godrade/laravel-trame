@@ -191,6 +191,29 @@ final class Tokens
         return ['class' => '', 'style' => ''];
     }
 
+    /**
+     * Whether a colour (palette token or #hex) is light enough to need dark text on it.
+     * Tokens: "white", or a shade of 300 or less ("amber-200"); hex: relative luminance.
+     */
+    public static function isLight(mixed $color): bool
+    {
+        if (! is_string($color)) {
+            return false;
+        }
+
+        if (preg_match('/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i', $color, $m)) {
+            [$r, $g, $b] = array_map(function (string $hex): float {
+                $c = hexdec($hex) / 255;
+
+                return $c <= 0.03928 ? $c / 12.92 : (($c + 0.055) / 1.055) ** 2.4;
+            }, [$m[1], $m[2], $m[3]]);
+
+            return 0.2126 * $r + 0.7152 * $g + 0.0722 * $b > 0.4;
+        }
+
+        return $color === 'white' || (preg_match('/-(\d+)$/', $color, $m) === 1 && (int) $m[1] <= 300);
+    }
+
     public static function join(?string ...$classes): string
     {
         return trim((string) preg_replace('/\s+/', ' ', implode(' ', array_filter($classes))));

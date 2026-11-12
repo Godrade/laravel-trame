@@ -115,4 +115,8 @@ return [
     'mode_help' => 'Simple mode hides layout and appearance settings.',
     'per_screen_locked' => 'Set per screen: edit it in advanced mode.',
     'preview_title' => 'Page preview',
+    'locked_badge' => 'Locked',
+    'locked_notice' => 'This section is locked: you can edit its text and images, not its structure.',
+    'lock_structure' => 'Lock the structure',
+    'lock_structure_help' => 'In simple mode the section cannot be moved or deleted, and its rows, columns and blocks stay in place. Text and images remain editable.',
 ];

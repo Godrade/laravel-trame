@@ -1,9 +1,11 @@
 @if(count($images))
+    @php($gallerySizes = \Godrade\Trame\Media\Sizes::string(\Godrade\Trame\Media\Sizes::divide($vw ?? ['base' => 100], $columnCounts)))
     <div class="grid gap-4 {{ $columns }}">
         @foreach($images as $image)
             <figure>
                 <img
                     src="{{ $image['media']->url }}"
+                    @if($image['media']->srcset) srcset="{{ $image['media']->srcset }}" sizes="{{ $gallerySizes }}" @endif
                     alt="{{ $image['alt'] }}"
                     @if($image['media']->width && $image['media']->height) width="{{ $image['media']->width }}" height="{{ $image['media']->height }}" @endif
                     loading="lazy"

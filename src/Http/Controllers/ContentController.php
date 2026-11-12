@@ -4,6 +4,7 @@ namespace Godrade\Trame\Http\Controllers;
 
 use Godrade\Trame\Document\DocumentNormalizer;
 use Godrade\Trame\Document\DocumentValidator;
+use Godrade\Trame\Models\Revision;
 use Godrade\Trame\Models\TrameContent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,13 +35,15 @@ final class ContentController
         $content->document = $this->normalizer->normalize($request->input('document'));
         $content->revision++;
         $content->save();
+        $content->recordRevision(Revision::SAVE, $request->user()?->getAuthIdentifier());
 
         return $this->respond($content);
     }
 
-    public function publish(TrameContent $content): JsonResponse
+    public function publish(Request $request, TrameContent $content): JsonResponse
     {
         $content->publish();
+        $content->recordRevision(Revision::PUBLISH, $request->user()?->getAuthIdentifier());
 
         return $this->respond($content);
     }

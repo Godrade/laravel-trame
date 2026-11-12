@@ -1,1 +1,1 @@
-{{-- Feature slot: see resources/js/editor/features/index.js --}}
+<button type="button" class="tr-btn-ghost text-xs" @click="openRevisions()" x-text="t.history"></button>

@@ -48,4 +48,6 @@ return [
     'width' => ['full' => 'Whole column'],
     // Explicit labels used by core blocks (sizes whose meaning depends on the block).
     'labels' => ['normal' => 'Regular', 'large' => 'Large', 'highlighted' => 'Highlighted', 'lead' => 'Lead'],
+    'bg_overlay_opacity' => ['0' => 'None', '20' => '20%', '40' => '40%', '60' => '60%', '80' => '80%'],
+    'bg_position' => ['top' => 'Top', 'center' => 'Centre', 'bottom' => 'Bottom'],
 ];

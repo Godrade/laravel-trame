@@ -133,6 +133,11 @@ return [
         // LocalDiskProvider
         'disk' => 'public',
         'directory' => 'trame',
+        // Widths (px) of the resized copies generated on upload for srcset (jpeg, png, webp;
+        // widths >= the original are skipped). [] disables them.
+        'widths' => [480, 960, 1600],
+        // Photos above this many pixels are kept without resized copies (GD memory).
+        'max_pixels' => 24_000_000,
 
         // SpatieMediaProvider
         'spatie' => [
@@ -142,6 +147,43 @@ return [
             'disk' => null,        // null: media-library.disk_name
             'conversion' => null,  // conversion name served instead of the original, when generated
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Starter sections and links
+    |--------------------------------------------------------------------------
+    */
+
+    'patterns' => [
+        // The six built-in sections (hero, features, testimonials, faq, cta, image_text).
+        'defaults' => true,
+        // Your own: class names implementing Godrade\Trame\Patterns\Pattern.
+        'extra' => [],
+    ],
+
+    'links' => [
+        // Class implementing Godrade\Trame\Links\LinkResolver (default: PageLinkResolver).
+        'resolver' => null,
+        // URL of a page chosen in the link picker: fn (Page $page, string $locale): string.
+        // Default: route "trame.page" if it exists, otherwise /{slug}.
+        'page_url' => null,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Revisions
+    |--------------------------------------------------------------------------
+    |
+    | Every save and publication is kept in the history of a content. Saves by
+    | the same user within "coalesce_minutes" update the same entry, so the
+    | editor's autosave does not flood the history.
+    |
+    */
+
+    'revisions' => [
+        'coalesce_minutes' => 10,
+        'keep' => 50,
     ],
 
     /*

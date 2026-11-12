@@ -13,4 +13,5 @@ return [
     'gallery' => 'Galerie',
     'gallery_placeholder' => 'Aucune image dans la galerie',
     'card' => 'Carte',
+    'empty' => ':block vide : double-cliquez ou utilisez le panneau de droite pour le remplir.',
 ];

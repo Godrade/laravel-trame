@@ -15,12 +15,13 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $size
  * @property int|null $width
  * @property int|null $height
+ * @property array<int, array{path: string, width: int}>|null $variants Resized copies, same disk.
  */
 class Media extends Model
 {
     protected $table = 'trame_media';
 
-    protected $fillable = ['disk', 'path', 'name', 'mime', 'size', 'width', 'height'];
+    protected $fillable = ['disk', 'path', 'name', 'mime', 'size', 'width', 'height', 'variants'];
 
     protected function casts(): array
     {
@@ -28,6 +29,7 @@ class Media extends Model
             'size' => 'integer',
             'width' => 'integer',
             'height' => 'integer',
+            'variants' => 'array',
         ];
     }
 }

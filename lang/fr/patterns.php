@@ -1,0 +1,61 @@
+<?php
+
+// Textes des sections prêtes à l'emploi. Remplacez-les par les vôtres une fois la section insérée.
+return [
+    'hero' => [
+        'label' => 'Bandeau d’accueil',
+        'description' => 'Grand titre, phrase d’introduction et deux boutons sur fond sombre.',
+        'title' => 'Un accompagnement clair, du premier échange à la livraison',
+        'lead' => 'Nous écoutons votre besoin, nous proposons une solution adaptée à votre budget, puis nous la mettons en place avec vous.',
+        'primary' => 'Demander un devis',
+        'secondary' => 'Voir nos réalisations',
+    ],
+    'features' => [
+        'label' => 'Trois atouts',
+        'description' => 'Un titre et trois cartes pour présenter vos points forts.',
+        'title' => 'Ce que nous vous apportons',
+        'item1_title' => 'Un interlocuteur unique',
+        'item1_text' => 'Une seule personne suit votre dossier du début à la fin et répond à vos questions sous un jour ouvré.',
+        'item2_title' => 'Des délais tenus',
+        'item2_text' => 'Le calendrier est fixé avec vous dès le départ. Si un point retarde le projet, vous le savez tout de suite.',
+        'item3_title' => 'Un prix annoncé à l’avance',
+        'item3_text' => 'Le devis détaille chaque poste. Rien n’est facturé en plus sans votre accord écrit.',
+    ],
+    'testimonials' => [
+        'label' => 'Témoignages',
+        'description' => 'Un titre et deux citations de clients.',
+        'title' => 'Ils nous ont fait confiance',
+        'quote1' => 'Le projet a été livré à la date prévue et il correspond exactement à ce que nous avions décrit au départ.',
+        'quote1_author' => 'Claire Martin',
+        'quote1_source' => 'Responsable administrative, association Les Jardins du Parc',
+        'quote2' => 'Nous avons apprécié d’avoir toujours la même personne au téléphone et des réponses précises à chaque question.',
+        'quote2_author' => 'Julien Bernard',
+        'quote2_source' => 'Gérant, boulangerie Bernard',
+    ],
+    'faq' => [
+        'label' => 'Questions fréquentes',
+        'description' => 'Un titre et trois questions avec leur réponse.',
+        'title' => 'Questions fréquentes',
+        'q1' => 'Combien de temps faut-il compter ?',
+        'a1' => 'Pour un projet standard, comptez entre quatre et six semaines à partir de la validation du devis. Nous confirmons le délai exact avant de commencer.',
+        'q2' => 'Comment se déroule le paiement ?',
+        'a2' => 'Un acompte de 30 % est demandé à la commande, le solde est réglé à la livraison. Les factures sont envoyées par courriel.',
+        'q3' => 'Puis-je modifier ma demande en cours de route ?',
+        'a3' => 'Oui, tant que le travail concerné n’est pas commencé. Nous vous indiquons l’effet du changement sur le prix et sur le délai avant de le réaliser.',
+    ],
+    'cta' => [
+        'label' => 'Appel à l’action',
+        'description' => 'Titre centré, phrase et bouton sur fond de couleur.',
+        'title' => 'Parlons de votre projet',
+        'text' => 'Décrivez votre besoin en quelques lignes. Nous vous répondons sous deux jours ouvrés.',
+        'button' => 'Nous contacter',
+    ],
+    'image_text' => [
+        'label' => 'Image et texte',
+        'description' => 'Une image à gauche, un titre, un texte et un bouton à droite.',
+        'title' => 'Une équipe proche de vous',
+        'text' => 'Depuis plus de dix ans, nous travaillons avec des artisans, des commerces et des associations de la région. Nous connaissons leurs contraintes et nous parlons un langage simple.',
+        'button' => 'Faire connaissance',
+        'image_alt' => 'Notre équipe devant l’atelier',
+    ],
+];

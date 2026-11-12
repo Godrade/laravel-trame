@@ -13,4 +13,5 @@ return [
     'gallery' => 'Gallery',
     'gallery_placeholder' => 'No image in the gallery',
     'card' => 'Card',
+    'empty' => ':block block is empty: double-click it or use the right-hand panel to fill it in.',
 ];

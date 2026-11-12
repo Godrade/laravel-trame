@@ -103,3 +103,13 @@ it('keeps text to a readable width, positioned by its alignment', function () {
         ->and($text(['width' => 'full']))->not->toContain('max-w-[65ch]')->not->toContain('me-auto')
         ->and($text(['size' => 'lead']))->toContain('text-lg leading-8 sm:text-xl sm:leading-9')->not->toContain('leading-7');
 });
+
+it('puts dark text on light solid buttons', function () {
+    $button = fn (string $color) => renderBlock('button', ['label' => ['fr' => 'Go'], 'url' => ['fr' => '/go'], 'color' => $color]);
+
+    expect($button('white'))->toContain('bg-white text-black')
+        ->and($button('slate-100'))->toContain('bg-slate-100 text-black')
+        ->and($button('slate-900'))->toContain('bg-slate-900 text-white')
+        ->and(\Godrade\Trame\Support\Tokens::isLight('#fde68a'))->toBeTrue()
+        ->and(\Godrade\Trame\Support\Tokens::isLight('#1e1b4b'))->toBeFalse();
+});

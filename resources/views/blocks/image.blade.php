@@ -2,6 +2,7 @@
     <figure>
         <img
             src="{{ $media->url }}"
+            @if($media->srcset) srcset="{{ $media->srcset }}" sizes="{{ $sizes }}" @endif
             alt="{{ $alt ?? '' }}"
             @if($media->width && $media->height) width="{{ $media->width }}" height="{{ $media->height }}" @endif
             loading="lazy"

@@ -21,6 +21,13 @@ First release.
 - Appearance settings on every block and column: background, text colour, padding per screen, border and
   border colour, radius, shadow, CSS class. Blocks can apply them to their own root (`Block::$box`).
 - Card block; text block readable width and lead size; button sizes; highlighted quote; callout icons.
+- Autosave of the draft and revision history with restore (`trame_revisions` table, `trame.revisions`).
+- Section background image with overlay, position and text colour.
+- Responsive images: `srcset`/`sizes` from the column width, resized copies on upload (`trame.media.widths`).
+- Starter sections (patterns) and internal page links (`page:{id}`, `LinkResolver`, `trame.links.page_url`).
+- Locked sections (structure frozen in simple mode), checks panel (translations to do, images without
+  alternative text, heading levels), hints on empty blocks in the canvas.
+- Solid buttons pick dark or white text from the chosen colour's lightness.
 - Simple and advanced editor modes: simple by default (content only, short palette), advanced with the
   `trame.advanced` gate and a toolbar toggle. `Field::advanced()`, `trame.editor.simple.blocks` and `.layouts`.
 - Visual samples for radius, shadow, border and spacing options (`Field::preview()`).

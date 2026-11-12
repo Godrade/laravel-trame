@@ -9,6 +9,8 @@ use Godrade\Trame\Layout\Box;
 use Godrade\Trame\Layout\ColumnLayout;
 use Godrade\Trame\Layout\RowLayout;
 use Godrade\Trame\Layout\SectionLayout;
+use Godrade\Trame\Media\MediaProvider;
+use Godrade\Trame\Media\Sizes;
 use Godrade\Trame\Models\Template;
 use Godrade\Trame\Support\Localizer;
 use Godrade\Trame\Support\Tokens;
@@ -21,6 +23,9 @@ final class Renderer
     private string $locale = 'en';
 
     private bool $editing = false;
+
+    /** @var array<string, int> Viewport width (vw) of the column being rendered, per breakpoint. */
+    private array $columnVw = ['base' => 100];
 
     /** @var array<int, int> */
     private array $templateStack = [];
@@ -63,15 +68,37 @@ final class Renderer
             return $this->global($node, 'section', fn (array $inner) => $this->section($inner));
         }
 
-        $classes = SectionLayout::classes($node['settings']);
+        $background = $this->background($node['settings']);
+        $classes = SectionLayout::classes($node['settings'], $background !== null);
         $classes['section'] = Tokens::join($classes['section'], $this->hideClasses($node));
 
         return $this->view->make('trame::layout.section', [
             ...$classes,
             'anchor' => $node['settings']['anchor'] ?: null,
+            'background' => $background,
             'attributes' => $this->attributes($node['id'], 'section', $node),
             'rows' => implode('', array_map(fn (array $row) => $this->row($row), $node['rows'])),
         ])->render();
+    }
+
+    /**
+     * Background photo of a section (image + optional colour overlay), or null
+     * when none is set or the media no longer exists.
+     *
+     * @param  array<string, mixed>  $settings
+     * @return array<string, mixed>|null
+     */
+    private function background(array $settings): ?array
+    {
+        $id = $settings['bg_image'] ?? null;
+
+        if (! is_int($id) && ! (is_string($id) && $id !== '')) {
+            return null;
+        }
+
+        $media = app(MediaProvider::class)->find($id);
+
+        return $media === null ? null : SectionLayout::background($settings, $media);
     }
 
     private function row(array $node): string
@@ -89,11 +116,20 @@ final class Renderer
 
     private function column(array $node): string
     {
+        $previousVw = $this->columnVw;
+        $this->columnVw = Sizes::fromSpan($node['span']);
+
+        try {
+            $blocks = implode('', array_map(fn (array $block) => $this->block($block), $node['blocks']));
+        } finally {
+            $this->columnVw = $previousVw;
+        }
+
         return $this->view->make('trame::layout.column', [
             'classes' => Tokens::join(ColumnLayout::classes($node['settings'], $node['span']), $this->hideClasses($node)),
             'style' => Box::classes($node['settings'])['style'],
             'attributes' => $this->attributes($node['id'], 'column', $node),
-            'blocks' => implode('', array_map(fn (array $block) => $this->block($block), $node['blocks'])),
+            'blocks' => $blocks,
         ])->render();
     }
 
@@ -124,10 +160,18 @@ final class Renderer
             ...$data,
             ...$block->with($data),
             'box' => $box,
+            'vw' => $this->columnVw,
+            'sizes' => Sizes::string($this->columnVw),
             'editing' => $this->editing,
             'locale' => $this->locale,
             'editable' => $this->editable(...),
         ])->render();
+
+        if ($this->editing && $node['type'] !== 'spacer' && self::isEmpty($html)) {
+            // currentColor: readable on light and dark sections alike.
+            $html = '<div style="border:1px dashed currentColor;padding:12px 16px;font:13px system-ui,sans-serif;opacity:.55">'
+                .e(__('trame::blocks.empty', ['block' => $block::label()])).'</div>';
+        }
 
         // Wrapper only when needed: margins, appearance, and hide classes in public output.
         $classes = Tokens::join(
@@ -145,6 +189,18 @@ final class Renderer
         }
 
         return $attributes === '' ? $html : '<div'.$attributes.'>'.$html.'</div>';
+    }
+
+    /** True when the rendered block shows nothing: no text and no media. */
+    private static function isEmpty(string $html): bool
+    {
+        if (preg_match('/<(img|svg|iframe|video|hr)\b/i', $html)) {
+            return false;
+        }
+
+        $text = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5);
+
+        return trim((string) preg_replace('/[\s\x{00A0}\x{200B}]+/u', ' ', $text)) === '';
     }
 
     /**

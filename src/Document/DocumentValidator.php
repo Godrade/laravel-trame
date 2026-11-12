@@ -92,6 +92,12 @@ final class DocumentValidator
         $this->settings(SectionLayout::schema(), $node['settings'] ?? [], "{$path}.settings");
         $this->hide($node, $path);
 
+        $locked = is_array($node['settings'] ?? null) ? ($node['settings']['locked'] ?? null) : null;
+
+        if ($locked !== null && ! is_bool($locked)) {
+            $this->fail("{$path}.settings.locked", 'structure');
+        }
+
         $rows = $node['rows'] ?? [];
 
         if (! is_array($rows) || ! array_is_list($rows)) {

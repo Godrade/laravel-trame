@@ -283,3 +283,18 @@ test('detects per-screen overrides of responsive fields', () => {
     assert.equal(D.hasResponsiveOverrides({ align: { base: 'center', lg: 'start' } }, align), true);
     assert.equal(D.hasResponsiveOverrides({}, align), false);
 });
+
+test('locked sections freeze their whole subtree', () => {
+    const doc = {
+        sections: [
+            { id: 'sec_a', type: 'section', settings: { locked: true }, rows: [{ id: 'row_a', type: 'row', settings: {}, columns: [{ id: 'col_a', span: { base: 12 }, settings: {}, blocks: [{ id: 'blk_a', type: 'heading', data: {} }] }] }] },
+            { id: 'sec_b', type: 'section', settings: {}, rows: [] },
+        ],
+    };
+    const index = D.buildIndex(doc);
+
+    assert.deepEqual(D.lockedSectionIds(doc), ['sec_a']);
+    assert.equal(D.isInLockedSection(index, 'sec_a'), true);
+    assert.equal(D.isInLockedSection(index, 'blk_a'), true);
+    assert.equal(D.isInLockedSection(index, 'sec_b'), false);
+});

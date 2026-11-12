@@ -286,7 +286,7 @@ export default function editor() {
                 }
 
                 this.errors = result.errors ?? {};
-                this.postFrame({ type: 'trame:render', html: result.html, selected: this.selectedId });
+                this.postFrame({ type: 'trame:render', html: result.html, selected: this.selectedId, locked: this.simple ? D.lockedSectionIds(this.doc) : [] });
             } catch (error) {
                 if (seq === previewSeq) {
                     this.fail(error);
@@ -454,6 +454,10 @@ export default function editor() {
                 return this.addSection(preset);
             }
 
+            if (this.refuseLocked(section.id)) {
+                return;
+            }
+
             const row = D.makeRow(preset.spans, this.defs.layout, this.fallback);
             this.mutate(() => {
                 section.node.rows ??= [];
@@ -465,7 +469,7 @@ export default function editor() {
         applyPreset(rowId, preset) {
             const entry = index.get(rowId);
 
-            if (entry?.kind === 'row') {
+            if (entry?.kind === 'row' && !this.refuseLocked(rowId)) {
                 this.mutate(() => D.applyPreset(entry.node, preset.spans, this.defs.layout, this.fallback));
             }
         },
@@ -473,7 +477,7 @@ export default function editor() {
         addColumn(rowId) {
             const entry = index.get(rowId);
 
-            if (entry?.kind !== 'row') {
+            if (entry?.kind !== 'row' || this.refuseLocked(rowId)) {
                 return;
             }
 
@@ -514,12 +518,18 @@ export default function editor() {
 
         addBlock(type) {
             const block = D.makeBlock(this.blockDefs[type], this.fallback);
-            this.insertBlockNode(block);
-            this.select(block.id, true);
+
+            if (this.insertBlockNode(block) !== false) {
+                this.select(block.id, true);
+            }
         },
 
         insertBlockNode(node) {
             const point = this.insertionPoint();
+
+            if (point && this.refuseLocked(point.column.id)) {
+                return false;
+            }
 
             this.mutate(() => {
                 if (point) {
@@ -534,10 +544,48 @@ export default function editor() {
             });
         },
 
+        /* ------------------------------------------------------ locked sections */
+
+        /** Structure of a locked section (and everything inside) is frozen in simple mode; content stays editable. */
+        isLocked(id) {
+            this.version;
+
+            return this.simple && !!id && D.isInLockedSection(index, id);
+        },
+
+        /** Notify and return true when the change would alter a locked structure. */
+        refuseLocked(...ids) {
+            if (!ids.some((id) => this.isLocked(id))) {
+                return false;
+            }
+
+            this.notify(this.t.locked_notice, 'info');
+
+            return true;
+        },
+
+        toggleLocked(id) {
+            const entry = index.get(id);
+
+            if (entry?.kind !== 'section') {
+                return;
+            }
+
+            this.mutate(() => {
+                entry.node.settings = D.isObject(entry.node.settings) ? entry.node.settings : {};
+
+                if (entry.node.settings.locked === true) {
+                    delete entry.node.settings.locked;
+                } else {
+                    entry.node.settings.locked = true;
+                }
+            });
+        },
+
         duplicate(id) {
             const entry = index.get(id);
 
-            if (!entry) {
+            if (!entry || this.refuseLocked(id)) {
                 return;
             }
 
@@ -553,7 +601,7 @@ export default function editor() {
         remove(id) {
             const entry = index.get(id);
 
-            if (!entry) {
+            if (!entry || this.refuseLocked(id)) {
                 return;
             }
 
@@ -567,7 +615,7 @@ export default function editor() {
         },
 
         move(id, delta) {
-            if (index.has(id)) {
+            if (index.has(id) && !this.refuseLocked(id)) {
                 this.mutate(() => D.moveBy(index, id, delta));
                 this.postFrame({ type: 'trame:select', id: this.selectedId, scroll: true });
             }
@@ -575,11 +623,14 @@ export default function editor() {
 
         moveTo(id, parentId, position) {
             const before = this.snapshot();
-            const ok = this.mutate(() => D.moveTo(this.doc, index, id, parentId, position));
+            const refused = this.refuseLocked(id, parentId);
+            const ok = !refused && this.mutate(() => D.moveTo(this.doc, index, id, parentId, position));
 
             if (!ok) {
-                // Refused move (e.g. last column): drop the history entry and re-sync the frame.
-                this.history.pop();
+                // Refused move (e.g. last column, locked section): drop the history entry and re-sync the frame.
+                if (!refused) {
+                    this.history.pop();
+                }
                 this.doc = JSON.parse(before);
                 this.reindex();
                 this.refreshPreview();
@@ -648,7 +699,7 @@ export default function editor() {
         dropNode(payload, parentId, position) {
             const built = this.nodeFromPayload(payload);
 
-            if (!built) {
+            if (!built || this.refuseLocked(parentId)) {
                 return;
             }
 
@@ -853,6 +904,8 @@ export default function editor() {
             }
 
             this.mode = mode === 'advanced' ? 'advanced' : 'simple';
+            // Locked sections only apply in simple mode: the canvas must know.
+            this.refreshPreview();
 
             try {
                 localStorage.setItem(MODE_KEY, this.mode);
@@ -1242,9 +1295,15 @@ export default function editor() {
             const node = template.is_global ? D.makeGlobal(template.kind, template.id) : D.reId(template.content);
 
             if (template.kind === 'block') {
-                this.insertBlockNode(node);
+                if (this.insertBlockNode(node) === false) {
+                    return;
+                }
             } else if (template.kind === 'row') {
                 const section = this.selected ? D.closest(index, this.selected.id, 'section') : null;
+
+                if (section && this.refuseLocked(section.id)) {
+                    return;
+                }
 
                 this.mutate(() => {
                     if (section) {

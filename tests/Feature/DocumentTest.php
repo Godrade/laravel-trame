@@ -93,3 +93,17 @@ it('sanitizes rich text', function () {
 
     expect($doc['sections'][0]['rows'][0]['columns'][0]['blocks'][0]['data']['content']['fr'])->toBe('<p>Hi</p>');
 });
+
+it('keeps the structure lock of sections only when true', function () {
+    $doc = trameDoc([heading(['fr' => 'X'])]);
+    $doc['sections'][0]['settings'] = ['locked' => true];
+    $normalize = fn (array $doc) => app(DocumentNormalizer::class)->normalize($doc)['sections'][0]['settings'];
+
+    expect($normalize($doc))->toMatchArray(['locked' => true]);
+
+    $doc['sections'][0]['settings'] = ['locked' => false];
+    expect($normalize($doc))->not->toHaveKey('locked');
+
+    $doc['sections'][0]['settings'] = ['locked' => 'yes'];
+    expect(validationErrors($doc))->toHaveKey('document.sections.0.settings.locked');
+});

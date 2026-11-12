@@ -51,4 +51,8 @@ return [
     'shadow' => 'Shadow',
     'class' => 'CSS class',
     'class_help' => 'Classes from the site stylesheet, separated by spaces.',
+    'bg_image' => "Background image",
+    'bg_overlay' => "Overlay colour",
+    'bg_overlay_opacity' => "Overlay opacity",
+    'bg_position' => "Image position",
 ];

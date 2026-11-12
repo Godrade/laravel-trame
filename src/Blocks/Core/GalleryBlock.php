@@ -64,6 +64,7 @@ final class GalleryBlock extends Block
 
         return [
             'images' => $images,
+            'columnCounts' => is_array($data['columns'] ?? null) ? $data['columns'] : ['base' => $data['columns'] ?? 2],
             'columns' => Tokens::responsive(self::COLUMNS, $data['columns'] ?? null, '2'),
             'imageClasses' => Tokens::join('block h-auto w-full', self::RATIO[$data['ratio'] ?? 'auto'] ?? '', 'rounded-(--trame-radius)'),
         ];

@@ -3,6 +3,7 @@
 namespace Godrade\Trame\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
@@ -38,6 +39,44 @@ class TrameContent extends Model
     public function contentable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    /** @return HasMany<Revision, $this> Latest first. */
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(Revision::class, 'trame_content_id')->latest('id');
+    }
+
+    /**
+     * Snapshot the current draft. Consecutive saves by the same user within
+     * trame.revisions.coalesce_minutes are merged into one entry (autosave).
+     */
+    public function recordRevision(string $kind, int|string|null $userId = null): Revision
+    {
+        $userId = is_numeric($userId) ? (int) $userId : null;
+        $latest = $this->revisions()->first();
+        $window = (int) config('trame.revisions.coalesce_minutes', 10);
+
+        if ($kind === Revision::SAVE
+            && $latest?->kind === Revision::SAVE
+            && $latest->user_id === $userId
+            && $latest->created_at->gt(now()->subMinutes($window))) {
+            $latest->forceFill(['document' => $this->document, 'revision' => $this->revision])->save();
+            $revision = $latest;
+        } else {
+            $revision = $this->revisions()->create([
+                'revision' => $this->revision,
+                'kind' => $kind,
+                'document' => $this->document,
+                'user_id' => $userId,
+            ]);
+        }
+
+        $keep = max(1, (int) config('trame.revisions.keep', 50));
+        $keepIds = $this->revisions()->limit($keep)->pluck('id');
+        $this->revisions()->whereNotIn('id', $keepIds)->delete();
+
+        return $revision;
     }
 
     public function isPublished(): bool

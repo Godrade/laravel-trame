@@ -56,7 +56,8 @@ final class ButtonBlock extends Block
 
         $colorClasses = match (true) {
             $variant === 'solid' && $color['class'] === '' => 'bg-(--trame-accent) text-(--trame-on-accent)',
-            $variant === 'solid' => $color['class'].' text-white',
+            // Readable text on the chosen colour: dark on light colours, white otherwise.
+            $variant === 'solid' => $color['class'].(Tokens::isLight($data['color']) ? ' text-black' : ' text-white'),
             default => Tokens::join($color['class'], $text['class']),
         };
 

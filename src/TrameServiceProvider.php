@@ -6,6 +6,8 @@ use Godrade\Trame\Blocks\BlockRegistry;
 use Godrade\Trame\Console\ClearCacheCommand;
 use Godrade\Trame\Console\MakeBlockCommand;
 use Godrade\Trame\Console\SourcesCommand;
+use Godrade\Trame\Links\LinkResolver;
+use Godrade\Trame\Links\PageLinkResolver;
 use Godrade\Trame\Media\MediaProvider;
 use Godrade\Trame\Support\HtmlSanitizer;
 use Godrade\Trame\Support\Localizer;
@@ -26,6 +28,7 @@ class TrameServiceProvider extends ServiceProvider
         $this->app->singleton(BlockRegistry::class, fn ($app) => new BlockRegistry($app, $app['config']));
         $this->app->singleton(HtmlSanitizer::class);
         $this->app->singleton(MediaProvider::class, fn ($app) => $app->make($app['config']->get('trame.media.provider')));
+        $this->app->singleton(LinkResolver::class, fn ($app) => $app->make($app['config']->get('trame.links.resolver') ?: PageLinkResolver::class));
         $this->app->singleton(Trame::class);
         $this->app->alias(Trame::class, 'trame');
     }

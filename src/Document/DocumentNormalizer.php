@@ -63,7 +63,11 @@ final class DocumentNormalizer
         return [
             'id' => $this->id($node, 'sec'),
             'type' => 'section',
-            'settings' => $this->settings(SectionLayout::schema(), $node),
+            'settings' => [
+                ...$this->settings(SectionLayout::schema(), $node),
+                // Structure locked in the editor's simple mode; stored only when true.
+                ...((($node['settings'] ?? [])['locked'] ?? false) === true ? ['locked' => true] : []),
+            ],
             'rows' => $this->list($node['rows'] ?? [], fn ($row) => $this->row($row)),
         ];
     }

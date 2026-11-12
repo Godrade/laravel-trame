@@ -29,6 +29,7 @@ final class SpatieMediaProvider implements MediaProvider
         $media = $this->library()
             ->addMedia($file)
             ->usingName(mb_substr($file->getClientOriginalName(), 0, 255))
+            ->withResponsiveImages()
             ->withCustomProperties(['width' => $width, 'height' => $height])
             ->toMediaCollection($this->collection(), $this->disk());
 
@@ -97,6 +98,8 @@ final class SpatieMediaProvider implements MediaProvider
         $width = $media->getCustomProperty('width');
         $height = $media->getCustomProperty('height');
 
+        $srcset = $useConversion ? $media->getSrcset($conversion) : $media->getSrcset();
+
         return new MediaItem(
             id: $media->getKey(),
             url: $useConversion ? $media->getUrl($conversion) : $media->getUrl(),
@@ -105,6 +108,7 @@ final class SpatieMediaProvider implements MediaProvider
             // A conversion may change the size: only expose the original's when serving the original.
             width: $useConversion || ! is_int($width) ? null : $width,
             height: $useConversion || ! is_int($height) ? null : $height,
+            srcset: $srcset !== '' ? $srcset : null,
         );
     }
 }

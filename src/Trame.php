@@ -12,6 +12,7 @@ use Godrade\Trame\Layout\ColumnLayout;
 use Godrade\Trame\Layout\RowLayout;
 use Godrade\Trame\Layout\SectionLayout;
 use Godrade\Trame\Models\TrameContent;
+use Godrade\Trame\Patterns\Patterns;
 use Godrade\Trame\Support\Grid;
 use Godrade\Trame\Support\Localizer;
 use Godrade\Trame\Support\Palette;
@@ -109,6 +110,7 @@ class Trame
                 'block' => $fields(BlockLayout::schema()),
             ],
             'blocks' => array_values(array_map(fn (Block $block) => $block->definition(), $this->registry->all())),
+            'patterns' => $this->app->make(Patterns::class)->definitions(),
         ];
     }
 

@@ -2,6 +2,7 @@
 
 namespace Godrade\Trame\Fields;
 
+use Godrade\Trame\Links\LinkResolver;
 use Godrade\Trame\Support\HtmlSanitizer;
 use Godrade\Trame\Support\Localizer;
 
@@ -67,7 +68,7 @@ final class Schema
             }
 
             if (! $field->isTranslatable()) {
-                $out[$field->name] = $value;
+                $out[$field->name] = self::resolveLink($field, $value, $locale);
 
                 continue;
             }
@@ -78,10 +79,20 @@ final class Schema
                 return null;
             }
 
-            $out[$field->name] = $resolved;
+            $out[$field->name] = self::resolveLink($field, $resolved, $locale);
         }
 
         return $out;
+    }
+
+    /** Internal references ("page:12") of url fields become real URLs; unresolvable ones become "#". */
+    private static function resolveLink(Field $field, mixed $value, string $locale): mixed
+    {
+        if ($field->type !== 'url' || ! is_string($value) || ! preg_match('/^page:\d+$/D', $value)) {
+            return $value;
+        }
+
+        return app(LinkResolver::class)->resolve($value, $locale) ?? '#';
     }
 
     /**

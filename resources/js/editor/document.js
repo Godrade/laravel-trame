@@ -240,6 +240,16 @@ export function closest(index, id, level) {
     return ancestors(index, id).find((entry) => entry.level === level && entry.kind !== 'global') ?? null;
 }
 
+/** Ids of the sections whose structure is locked (settings.locked), for the simple mode. */
+export function lockedSectionIds(doc) {
+    return (doc?.sections ?? []).filter((section) => section?.type === 'section' && section.settings?.locked === true).map((section) => section.id);
+}
+
+/** True when the node is a locked section or lies inside one. */
+export function isInLockedSection(index, id) {
+    return closest(index, id, 'section')?.node?.settings?.locked === true;
+}
+
 /** Move a node by one position inside its own list. */
 export function moveBy(index, id, delta) {
     const entry = index.get(id);

@@ -171,11 +171,13 @@ function initSortables() {
         return;
     }
 
-    const insideGlobal = (el) => Boolean(el.closest('[data-trame-node="global"]'));
+    // Nothing moves inside a global template or a locked section (simple mode).
+    const insideGlobal = (el) => Boolean(el.closest('[data-trame-node="global"], [data-trame-locked]'));
 
-    const create = (el, group) => {
+    const create = (el, group, options = {}) => {
         sortables.push(
             Sortable.create(el, {
+                ...options,
                 group,
                 draggable: '[data-trame-id]',
                 animation: 150,
@@ -210,7 +212,8 @@ function initSortables() {
         );
     };
 
-    create(container, 'trame-sections');
+    // A locked section stays in place; clicks still select it.
+    create(container, 'trame-sections', { filter: '[data-trame-locked]', preventOnFilter: false });
 
     container.querySelectorAll('[data-trame-node="section"]').forEach((section) => {
         const inner = section.firstElementChild;
@@ -319,8 +322,18 @@ function applyRender(message) {
 
     selectedId = message.selected ?? selectedId;
     hovered = null;
+    markLocked(message.locked ?? []);
     initSortables();
     redraw();
+}
+
+/** Sections whose structure is locked in the editor's simple mode (sent with each render). */
+function markLocked(ids) {
+    const locked = new Set(ids);
+
+    root()?.querySelectorAll('[data-trame-node="section"]').forEach((section) => {
+        section.toggleAttribute('data-trame-locked', locked.has(section.dataset.trameId));
+    });
 }
 
 /* ----------------------------------------------------- in-place editing */
@@ -430,7 +443,7 @@ function draggedLevel(event) {
     return marker ? marker.slice(`${TRAME_TYPE}-level-`.length) : null;
 }
 
-const outsideGlobal = (el) => el && !el.closest('[data-trame-node="global"]');
+const outsideGlobal = (el) => el && !el.closest('[data-trame-node="global"], [data-trame-locked]');
 
 /** Where a node of `level` would land under the pointer: { container, parentId, index, items }. */
 function dropTarget(level, x, y) {

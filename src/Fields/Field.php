@@ -560,7 +560,7 @@ final class Field
             'text' => ['string', 'max:'.($this->max ?? 255)],
             'textarea' => ['string', 'max:'.($this->max ?? 5000)],
             'rich_text' => ['string', 'max:'.($this->max ?? 50000)],
-            'url' => ['string', 'max:2048', 'regex:/^(https?:\/\/|\/|#|mailto:|tel:)/i'],
+            'url' => ['string', 'max:2048', 'regex:/^((https?:\/\/|\/|#|mailto:|tel:)|page:\d+$)/iD'],
             'number' => array_values(array_filter([
                 'numeric',
                 $this->min !== null ? 'min:'.$this->min : null,
