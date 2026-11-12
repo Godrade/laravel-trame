@@ -12,8 +12,8 @@ final class ColumnLayout
     public static function schema(): array
     {
         return [
-            Field::select('valign')->options(Tokens::keys(Tokens::VALIGN))->default('start'),
-            Field::select('gap')->label(__('trame::fields.blocks_gap'))->options(Tokens::SPACE)->default('sm')->responsive(),
+            Field::select('valign')->options(Tokens::keys(Tokens::VALIGN))->default('start')->advanced(),
+            Field::select('gap')->label(__('trame::fields.blocks_gap'))->options(Tokens::SPACE)->default('sm')->responsive()->preview('space')->advanced(),
             ...Box::fields(),
         ];
     }

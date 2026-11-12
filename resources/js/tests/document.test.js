@@ -274,3 +274,12 @@ test('responsive fields accept a per-breakpoint default', () => {
     assert.equal(D.readResponsive({}, columns, 'lg'), '3');
     assert.equal(D.readResponsive({ columns: { base: '1' } }, columns, 'lg'), '1', 'a stored value wins over the default');
 });
+
+test('detects per-screen overrides of responsive fields', () => {
+    const align = { name: 'align', type: 'select', responsive: true, default: 'start' };
+
+    assert.equal(D.hasResponsiveOverrides({ align: { base: 'center' } }, align), false);
+    assert.equal(D.hasResponsiveOverrides({ align: 'center' }, align), false);
+    assert.equal(D.hasResponsiveOverrides({ align: { base: 'center', lg: 'start' } }, align), true);
+    assert.equal(D.hasResponsiveOverrides({}, align), false);
+});

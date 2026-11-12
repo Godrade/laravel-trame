@@ -51,6 +51,12 @@
                     </template>
                 </div>
 
+                {{-- Simple / advanced mode (only with the "trame.advanced" gate) --}}
+                <div class="tr-seg" x-show="canAdvanced" :title="t.mode_help">
+                    <button type="button" :aria-pressed="mode === 'simple'" @click="setMode('simple')" x-text="t.mode_simple"></button>
+                    <button type="button" :aria-pressed="mode === 'advanced'" @click="setMode('advanced')" x-text="t.mode_advanced"></button>
+                </div>
+
                 <div class="flex items-center">
                     <button type="button" class="tr-icon-btn" :disabled="!history.length" @click="undo()" :title="t.undo + ' (⌘Z)'">
                         <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
@@ -126,11 +132,11 @@
                             </div>
                         </section>
 
-                        <template x-for="category in [...new Set(defs.blocks.map(b => b.category))]" :key="category">
+                        <template x-for="category in [...new Set(paletteBlocks.map(b => b.category))]" :key="category">
                             <section class="space-y-2">
                                 <h3 class="tr-heading" x-text="t.categories?.[category] ?? category"></h3>
                                 <div class="grid grid-cols-2 gap-2">
-                                    <template x-for="block in defs.blocks.filter(b => b.category === category)" :key="block.type">
+                                    <template x-for="block in paletteBlocks.filter(b => b.category === category)" :key="block.type">
                                         <button type="button" @click="addBlock(block.type)"
                                                 draggable="true" @dragstart="dragStart($event, { kind: 'block', type: block.type })" @dragend="dragEnd()"
                                                 class="flex cursor-grab items-center gap-2 rounded-md border border-zinc-200 px-2 py-2 text-start text-sm transition hover:border-indigo-400 hover:bg-indigo-50">
@@ -174,8 +180,8 @@
                                         <span x-show="template.is_global" class="text-amber-500" :title="t.global">◆</span>
                                         <span class="min-w-0 flex-1 truncate text-sm" x-text="template.name"></span>
                                         <button type="button" class="tr-btn-ghost px-1.5 py-0.5 text-xs" @click="insertTemplate(template)" x-text="t.insert" x-show="!templateMode"></button>
-                                        <button type="button" class="tr-btn-ghost px-1.5 py-0.5 text-xs" @click="editTemplate(template)" x-text="t.edit" x-show="!templateMode"></button>
-                                        <button type="button" class="tr-icon-btn size-6 opacity-0 group-hover:opacity-100" @click="deleteTemplate(template)" :title="t.delete" x-show="!readOnly">✕</button>
+                                        <button type="button" class="tr-btn-ghost px-1.5 py-0.5 text-xs" @click="editTemplate(template)" x-text="t.edit" x-show="!templateMode && !simple"></button>
+                                        <button type="button" class="tr-icon-btn size-6 opacity-0 group-hover:opacity-100" @click="deleteTemplate(template)" :title="t.delete" x-show="!readOnly && !simple">✕</button>
                                     </div>
                                 </template>
                             </section>
@@ -235,7 +241,7 @@
                             <button type="button" class="tr-icon-btn" :disabled="selected.position === 0" @click="move(selectedId, -1)" :title="t.move_up">↑</button>
                             <button type="button" class="tr-icon-btn" :disabled="selected.position === selected.list.length - 1" @click="move(selectedId, 1)" :title="t.move_down">↓</button>
                             <button type="button" class="tr-icon-btn" @click="duplicate(selectedId)" :title="t.duplicate">⧉</button>
-                            <button type="button" class="tr-icon-btn" x-show="canTemplate(selected) && !readOnly" @click="openTemplateDialog(selectedId)" :title="t.save_as_template">◆</button>
+                            <button type="button" class="tr-icon-btn" x-show="canTemplate(selected) && !readOnly && !simple" @click="openTemplateDialog(selectedId)" :title="t.save_as_template">◆</button>
                             <button type="button" class="tr-icon-btn hover:text-rose-600" @click="remove(selectedId)" :title="t.delete">✕</button>
                         </div>
 
@@ -249,8 +255,8 @@
                                 <div class="space-y-3">
                                     <p class="text-sm font-medium" x-text="templateName(selected.node.ref)"></p>
                                     <p class="text-xs leading-relaxed text-zinc-500" x-text="t.global_help"></p>
-                                    <button type="button" class="tr-btn-primary w-full" x-show="!templateMode" @click="editTemplate(templates.find(t => t.id === selected.node.ref))" x-text="t.edit_template"></button>
-                                    <button type="button" class="tr-btn-outline w-full" @click="detach(selectedId)" x-text="t.detach"></button>
+                                    <button type="button" class="tr-btn-primary w-full" x-show="!templateMode && !simple" @click="editTemplate(templates.find(t => t.id === selected.node.ref))" x-text="t.edit_template"></button>
+                                    <button type="button" class="tr-btn-outline w-full" x-show="!simple" @click="detach(selectedId)" x-text="t.detach"></button>
                                 </div>
                             </template>
 
@@ -288,7 +294,7 @@
                             </template>
 
                             {{-- Column: span for the current breakpoint --}}
-                            <template x-if="selected.kind === 'column'">
+                            <template x-if="selected.kind === 'column' && !simple">
                                 <div class="space-y-2">
                                     <div class="flex items-center justify-between">
                                         <h3 class="tr-heading" x-text="t.column_width + ' · ' + t.breakpoints[breakpoint]"></h3>
@@ -311,7 +317,7 @@
                                     <div class="flex items-center justify-between gap-2">
                                         <label class="tr-label" x-text="field.label + (field.required ? ' *' : '')"></label>
                                         <span x-show="field.translatable" class="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-500 uppercase" x-text="locale"></span>
-                                        <span x-show="field.responsive" class="ms-auto flex items-center gap-2">
+                                        <span x-show="field.responsive && !simple" class="ms-auto flex items-center gap-2">
                                             <button type="button" class="text-xs text-indigo-600 hover:underline"
                                                     x-show="breakpoint !== 'base' && !isInherited(field)" @click="setValue(field, null)" x-text="t.reset"></button>
                                             <span class="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-500" x-text="t.breakpoints[breakpoint]"></span>
@@ -320,7 +326,13 @@
                                     <p x-show="isInherited(field)" class="text-xs text-zinc-400" x-text="t.inherited"></p>
                                     <p x-show="field.help" class="text-xs leading-relaxed text-zinc-500" x-text="field.help"></p>
 
-                                    @include('trame::editor.partials.field-control', ['f' => 'field', 'c' => '', 'nested' => false])
+                                    {{-- Simple mode does not overwrite a value set per screen in the advanced mode. --}}
+                                    <p x-show="isLockedResponsive(field)" class="rounded-md bg-zinc-50 px-2.5 py-1.5 text-xs text-zinc-500" x-text="t.per_screen_locked"></p>
+                                    <template x-if="!isLockedResponsive(field)">
+                                        <div>
+                                            @include('trame::editor.partials.field-control', ['f' => 'field', 'c' => '', 'nested' => false])
+                                        </div>
+                                    </template>
 
                                     <template x-for="message in fieldErrors(field)" :key="message">
                                         <p class="text-xs text-rose-600" x-text="message"></p>

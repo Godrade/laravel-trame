@@ -15,6 +15,59 @@ const TRAME_TYPE = 'application/x-trame';
 
 const FRAME_WIDTHS = { base: 390, md: 820 };
 
+const MODE_KEY = 'trame.editor.mode';
+
+/** Approximate CSS of each option, drawn in the panel next to its name. */
+const SAMPLES = {
+    // A corner: top and left borders with the radius applied.
+    radius: { none: '0', theme: '5px', sm: '2px', md: '6px', lg: '9px', xl: '12px', '2xl': '16px', full: '22px' },
+    // Scaled down to fit the sample: each step deeper and darker than the previous one.
+    shadow: {
+        none: 'none',
+        sm: '0 1px 1px rgb(0 0 0 / .25)',
+        md: '0 2px 3px rgb(0 0 0 / .3)',
+        lg: '0 3px 5px rgb(0 0 0 / .35)',
+        xl: '0 4px 7px rgb(0 0 0 / .42)',
+        '2xl': '0 6px 9px rgb(0 0 0 / .5)',
+    },
+    border: { none: '0', thin: '1px', thick: '3px' },
+    // Width of a bar, growing with the space.
+    space: { none: 1, xs: 3, sm: 6, md: 10, lg: 14, xl: 18, '2xl': 24 },
+};
+
+/** Inline style of the sample of one option. */
+export function sampleStyle(kind, value) {
+    const key = String(value);
+
+    switch (kind) {
+        case 'radius':
+            return `display:block;width:22px;height:22px;border-top:2px solid #52525b;border-left:2px solid #52525b;border-top-left-radius:${SAMPLES.radius[key] ?? '0'}`;
+        case 'shadow':
+            return `display:block;width:18px;height:13px;margin-bottom:5px;border-radius:3px;background:#fff;border:1px solid #e4e4e7;box-shadow:${SAMPLES.shadow[key] ?? 'none'}`;
+        case 'border':
+            return key === 'none'
+                ? 'display:block;width:20px;height:20px;border:1px dashed #d4d4d8'
+                : `display:block;width:20px;height:20px;border:${SAMPLES.border[key] ?? '1px'} solid #3f3f46`;
+        case 'space':
+            return `display:block;height:8px;border-radius:2px;background:#818cf8;width:${SAMPLES.space[key] ?? 6}px`;
+        default:
+            return '';
+    }
+}
+
+/** Advanced editors get back their last mode (advanced by default); others are always in simple mode. */
+function initialMode(cfg) {
+    if (cfg.canAdvanced !== true) {
+        return 'simple';
+    }
+
+    try {
+        return localStorage.getItem(MODE_KEY) === 'simple' ? 'simple' : 'advanced';
+    } catch {
+        return 'advanced';
+    }
+}
+
 export default function editor() {
     const cfg = window.TrameEditor;
 
@@ -58,7 +111,9 @@ export default function editor() {
         frameWidth: 1280,
         frameHeight: 800,
         scale: 1,
-        presets: D.PRESETS,
+        // Simple mode hides advanced fields and limits the palette; "trame.advanced" unlocks the toggle.
+        canAdvanced: cfg.canAdvanced === true,
+        mode: initialMode(cfg),
         breakpoints: D.BREAKPOINTS,
 
         async init() {
@@ -711,11 +766,11 @@ export default function editor() {
                 return [];
             }
 
-            if (entry.kind === 'block') {
-                return [...(this.blockDefs[entry.node.type]?.fields ?? []), ...this.blockLayoutFields];
-            }
+            const fields = entry.kind === 'block'
+                ? [...(this.blockDefs[entry.node.type]?.fields ?? []), ...this.blockLayoutFields]
+                : ({ section: this.defs.layout.section, row: this.defs.layout.row, column: this.defs.layout.column }[entry.kind] ?? []);
 
-            return { section: this.defs.layout.section, row: this.defs.layout.row, column: this.defs.layout.column }[entry.kind] ?? [];
+            return this.simple ? fields.filter((field) => !field.advanced) : fields;
         },
 
         /** Settings shared by every block (margins), stored in node.settings rather than node.data. */
@@ -757,13 +812,61 @@ export default function editor() {
             return entry.node[key];
         },
 
+        /* ------------------------------------------------------------- mode */
+
+        get simple() {
+            return this.mode === 'simple';
+        },
+
+        setMode(mode) {
+            if (!this.canAdvanced) {
+                return;
+            }
+
+            this.mode = mode === 'advanced' ? 'advanced' : 'simple';
+
+            try {
+                localStorage.setItem(MODE_KEY, this.mode);
+            } catch {
+                // Storage unavailable (private window): the choice lasts for this page only.
+            }
+        },
+
+        /** Column layouts offered in the palette and the row and section panels. */
+        get presets() {
+            const keys = cfg.simple?.layouts ?? [];
+
+            return this.simple && keys.length ? D.PRESETS.filter((preset) => keys.includes(preset.key)) : D.PRESETS;
+        },
+
+        /** Blocks offered in the palette (existing blocks of other types stay editable). */
+        get paletteBlocks() {
+            const types = cfg.simple?.blocks ?? [];
+            const blocks = this.defs?.blocks ?? [];
+
+            return this.simple && types.length ? blocks.filter((block) => types.includes(block.type)) : blocks;
+        },
+
+        /** In simple mode, responsive values are edited for all screens at once (the base value). */
+        editBreakpoint() {
+            return this.simple ? 'base' : this.breakpoint;
+        },
+
+        /** Simple mode does not edit a value the advanced mode set per screen. */
+        isLockedResponsive(field, ctx = null) {
+            this.version;
+
+            return this.simple && !!field.responsive && D.hasResponsiveOverrides(this.container(field, false, ctx), field);
+        },
+
         value(field, ctx = null) {
             this.version;
             this.locale;
             this.breakpoint;
+            this.mode;
 
             return field.responsive
-                ? D.readResponsive(this.container(field, false, ctx), field, this.breakpoint)
+                ? D.readResponsive(this.container(field, false, ctx), field, this.editBreakpoint())
                 : D.readField(this.container(field, false, ctx), field, this.locale);
         },
 
@@ -780,7 +883,12 @@ export default function editor() {
 
             // The container is created inside mutate() so undo also removes it.
             if (field.responsive) {
-                this.mutate(() => D.writeResponsive(this.container(field, true), field, this.breakpoint, value), `${this.selectedId}:${field.name}:${this.breakpoint}`);
+                if (this.isLockedResponsive(field)) {
+                    return;
+                }
+
+                const breakpoint = this.editBreakpoint();
+                this.mutate(() => D.writeResponsive(this.container(field, true), field, breakpoint, value), `${this.selectedId}:${field.name}:${breakpoint}`);
 
                 return;
             }
@@ -792,7 +900,7 @@ export default function editor() {
         isInherited(field, ctx = null) {
             this.version;
 
-            return !!field.responsive && D.isResponsiveInherited(this.container(field, false, ctx), field, this.breakpoint);
+            return !this.simple && !!field.responsive && D.isResponsiveInherited(this.container(field, false, ctx), field, this.breakpoint);
         },
 
         /* ------------------------------------------------------------- repeaters */
@@ -869,7 +977,7 @@ export default function editor() {
         /* ----------------------------------------------------------- visibility */
 
         get canHide() {
-            return ['section', 'row', 'column', 'block'].includes(this.selected?.kind);
+            return !this.simple && ['section', 'row', 'column', 'block'].includes(this.selected?.kind);
         },
 
         isHidden(breakpoint) {
@@ -922,6 +1030,10 @@ export default function editor() {
 
         get nodeErrors() {
             return (this.errorMap.get(this.selectedId) ?? []).filter((error) => !/^(data|settings)\./.test(error.rel)).flatMap((e) => e.messages);
+        },
+
+        sampleStyle(kind, value) {
+            return sampleStyle(kind, value);
         },
 
         swatch(color) {

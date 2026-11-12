@@ -12,10 +12,10 @@ final class SectionLayout
     {
         return [
             Field::color('bg')->allowCustom(),
-            Field::select('padding')->options(Tokens::keys(Tokens::SECTION_PADDING))->default('md')->responsive(),
-            Field::select('rows_gap')->options(Tokens::SPACE)->default('md')->responsive(),
-            Field::select('container')->options(Tokens::keys(Tokens::CONTAINER))->default('boxed'),
-            Field::text('anchor')->max(64)->rules(['alpha_dash']),
+            Field::select('padding')->options(Tokens::keys(Tokens::SECTION_PADDING))->default('md')->responsive()->preview('space')->advanced(),
+            Field::select('rows_gap')->options(Tokens::SPACE)->default('md')->responsive()->preview('space')->advanced(),
+            Field::select('container')->options(Tokens::keys(Tokens::CONTAINER))->default('boxed')->advanced(),
+            Field::text('anchor')->advanced()->max(64)->rules(['alpha_dash']),
         ];
     }
 

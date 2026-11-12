@@ -91,6 +91,39 @@ Every editor route is behind the `trame.edit` gate, which **denies everyone by d
 Gate::define('trame.edit', fn (User $user) => $user->is_admin);
 ```
 
+#### Simple and advanced modes
+
+Editors work in a **simple mode** by default: content only, no layout or appearance settings, a short block
+palette. Grant `trame.advanced` to the people who build pages (an agency, a webmaster): they get every setting
+and a Simple / Advanced toggle in the toolbar, remembered per browser.
+
+```php
+Gate::define('trame.advanced', fn (User $user) => $user->is_admin);
+```
+
+In simple mode:
+
+- fields marked `->advanced()` are hidden: spacing, appearance, visibility, column and row settings, and the
+  secondary settings of core blocks (heading size, text width, colours…);
+- per-screen values are edited for all screens at once; a value set per screen in advanced mode is shown as
+  such and left untouched;
+- the palette offers `trame.editor.simple.blocks` and the column layouts `trame.editor.simple.layouts`;
+  existing blocks of other types stay editable;
+- templates can be inserted, not saved, detached or edited.
+
+```php
+// config/trame.php
+'editor' => [
+    'simple' => [
+        'blocks' => ['heading', 'text', 'image', 'button', 'card', 'quote', 'question'],
+        'layouts' => ['12', '6-6', '4-4-4', '8-4'],   // also 3-3-3-3, 4-8
+    ],
+],
+```
+
+The simple mode shapes the interface; it is not a permission. Requests to the editor API are not filtered
+by mode.
+
 #### Read-only editor
 
 A second gate, `trame.view`, opens the editor **without saving**: viewers can drag blocks, edit texts,
@@ -343,6 +376,9 @@ The view receives every field (translatable ones already resolved for the locale
 | `Field::color($name)` | palette token | `->allowCustom()` also accepts `#rrggbb`; render with `Tokens::color()` |
 | `Field::image($name)` | media id | resolve it with `MediaProvider::find()` |
 | `Field::repeater($name)` | list of items | `->fields([...])`, `->min()`, `->max()` (50 by default) |
+
+Editor hints: `->advanced()` hides the field in simple mode; `->group('Heading')` starts a group in the panel;
+`->preview('radius'|'shadow'|'border'|'space')` shows the options of a select as visual samples.
 
 Common modifiers: `->label()`, `->default()`, `->required()`, `->help()`, `->rules([...])` (extra Laravel
 rules), `->translatable()` (text, textarea, richText and url only: one value per locale).

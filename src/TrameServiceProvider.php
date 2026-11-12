@@ -66,6 +66,12 @@ class TrameServiceProvider extends ServiceProvider
             Gate::define('trame.edit', fn ($user = null) => false);
         }
 
+        // "trame.advanced" unlocks the advanced mode of the editor (spacing, appearance, per-screen
+        // values, every block). Everyone else gets the simple mode. Denied by default.
+        if (! Gate::has('trame.advanced')) {
+            Gate::define('trame.advanced', fn ($user = null) => false);
+        }
+
         // "trame.view" opens the editor read-only: everything can be tried, nothing is stored.
         // By default only editors can view; define it in the app to open a demo or a review role.
         if (! Gate::has('trame.view')) {

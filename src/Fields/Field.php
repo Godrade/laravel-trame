@@ -43,6 +43,12 @@ final class Field
     /** Heading shown above this field in the settings panel (first field of a group). */
     private ?string $group = null;
 
+    /** Hidden in the simple mode of the editor. */
+    private bool $advanced = false;
+
+    /** Visual preview of the options in the panel: radius, shadow, border or space. */
+    private ?string $preview = null;
+
     /** @var array<int, Field> Item sub-fields (repeater only). */
     private array $fields = [];
 
@@ -231,6 +237,26 @@ final class Field
     public function max(int|float $max): self
     {
         $this->max = $max;
+
+        return $this;
+    }
+
+    /** Hide this field in the simple mode of the editor (shown with the "trame.advanced" gate). */
+    public function advanced(bool $advanced = true): self
+    {
+        $this->advanced = $advanced;
+
+        return $this;
+    }
+
+    /** Show each option of a select as a small visual sample: radius, shadow, border or space. */
+    public function preview(string $kind): self
+    {
+        if (! in_array($kind, ['radius', 'shadow', 'border', 'space'], true)) {
+            throw new InvalidArgumentException("Unknown preview [{$kind}].");
+        }
+
+        $this->preview = $kind;
 
         return $this;
     }
@@ -522,6 +548,8 @@ final class Field
             'max' => $this->type === 'repeater' ? ($this->max ?? self::REPEATER_MAX) : $this->max,
             'help' => $this->help,
             'group' => $this->group,
+            'advanced' => $this->advanced ?: null,
+            'preview' => $this->preview,
         ], fn ($value) => $value !== null);
     }
 

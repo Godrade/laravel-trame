@@ -13,7 +13,7 @@ final class RowLayout
     public static function schema(): array
     {
         return [
-            Field::select('gap')->options(Tokens::keys(Tokens::GAP))->default('md'),
+            Field::select('gap')->options(Tokens::keys(Tokens::GAP))->default('md')->preview('space')->advanced(),
         ];
     }
 

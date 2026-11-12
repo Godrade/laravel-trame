@@ -110,4 +110,8 @@ return [
     'read_only_banner' => 'Mode démo : essayez tout librement, rien n’est enregistré sur le serveur.',
     'read_only_notice' => 'Mode démo : cette action est désactivée, vos modifications restent dans votre navigateur.',
     'read_only_changes' => 'Modifications locales, non enregistrées',
+    'mode_simple' => 'Simple',
+    'mode_advanced' => 'Avancé',
+    'mode_help' => 'Le mode simple masque les réglages de mise en page et d’apparence.',
+    'per_screen_locked' => 'Réglé différemment selon l’écran : modifiable en mode avancé.',
 ];

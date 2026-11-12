@@ -87,6 +87,13 @@ return [
         // Where the editor's "back" button goes when no ?return=/path is given.
         'return_url' => '/',
 
+        // Simple mode, shown to editors without the "trame.advanced" gate: advanced fields are
+        // hidden and the palette offers these blocks and column layouts only.
+        'simple' => [
+            'blocks' => ['heading', 'text', 'image', 'button', 'card', 'quote', 'question'],
+            'layouts' => ['12', '6-6', '4-4-4', '8-4'],
+        ],
+
         'preview' => [
             'layout' => 'trame::layouts.preview',
             'vite' => ['resources/css/app.css'],

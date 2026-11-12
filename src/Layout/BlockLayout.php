@@ -15,8 +15,8 @@ final class BlockLayout
     public static function schema(): array
     {
         return [
-            Field::select('margin_top')->options(Tokens::SPACE)->responsive()->group(__('trame::fields.group_spacing')),
-            Field::select('margin_bottom')->options(Tokens::SPACE)->responsive(),
+            Field::select('margin_top')->options(Tokens::SPACE)->responsive()->group(__('trame::fields.group_spacing'))->preview('space')->advanced(),
+            Field::select('margin_bottom')->options(Tokens::SPACE)->responsive()->preview('space')->advanced(),
             ...Box::fields(),
         ];
     }

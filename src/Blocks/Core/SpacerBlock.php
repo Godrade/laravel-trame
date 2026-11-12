@@ -22,10 +22,10 @@ final class SpacerBlock extends Block
     public function schema(): array
     {
         return [
-            Field::select('size')->options(Tokens::keys(Tokens::SPACER))->default('md'),
+            Field::select('size')->options(Tokens::keys(Tokens::SPACER))->default('md')->preview('space'),
             Field::toggle('divider'),
             // No colour: a hairline in the current text colour, readable on any background.
-            Field::color('color'),
+            Field::color('color')->advanced(),
         ];
     }
 

@@ -21,6 +21,9 @@ First release.
 - Appearance settings on every block and column: background, text colour, padding per screen, border and
   border colour, radius, shadow, CSS class. Blocks can apply them to their own root (`Block::$box`).
 - Card block; text block readable width and lead size; button sizes; highlighted quote; callout icons.
+- Simple and advanced editor modes: simple by default (content only, short palette), advanced with the
+  `trame.advanced` gate and a toolbar toggle. `Field::advanced()`, `trame.editor.simple.blocks` and `.layouts`.
+- Visual samples for radius, shadow, border and spacing options (`Field::preview()`).
 - Repeater field (`Field::repeater()->fields([...])`) with add, reorder and remove in the editor.
 - Responsive select defaults per breakpoint (`->default(['base' => '2', 'md' => '3'])`).
 - Rich text sanitized with `symfony/html-sanitizer`; URL, colour and locale validation.

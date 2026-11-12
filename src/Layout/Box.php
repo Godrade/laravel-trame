@@ -47,15 +47,15 @@ final class Box
     public static function fields(): array
     {
         return [
-            Field::color('background')->allowCustom()->group(__('trame::fields.group_appearance')),
-            Field::color('text_color')->allowCustom(),
-            Field::select('padding')->label(__('trame::fields.box_padding'))->options(Tokens::SPACE)->responsive(),
-            Field::select('border')->options(array_keys(self::BORDER)),
-            Field::color('border_color')->allowCustom(),
-            Field::select('radius')->options(array_keys(self::RADIUS)),
-            Field::select('shadow')->options(array_keys(self::SHADOW)),
+            Field::color('background')->allowCustom()->group(__('trame::fields.group_appearance'))->advanced(),
+            Field::color('text_color')->allowCustom()->advanced(),
+            Field::select('padding')->label(__('trame::fields.box_padding'))->options(Tokens::SPACE)->responsive()->preview('space')->advanced(),
+            Field::select('border')->options(array_keys(self::BORDER))->preview('border')->advanced(),
+            Field::color('border_color')->allowCustom()->advanced(),
+            Field::select('radius')->options(array_keys(self::RADIUS))->preview('radius')->advanced(),
+            Field::select('shadow')->options(array_keys(self::SHADOW))->preview('shadow')->advanced(),
             // Classes of the host stylesheet. Tailwind classes typed here only work if the host build contains them.
-            Field::text('class')->max(200)->rules(['regex:/^[A-Za-z0-9_\-:\/.\[\] ]*$/'])
+            Field::text('class')->advanced()->max(200)->rules(['regex:/^[A-Za-z0-9_\-:\/.\[\] ]*$/'])
                 ->help(__('trame::fields.class_help')),
         ];
     }

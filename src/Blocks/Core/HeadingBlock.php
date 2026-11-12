@@ -22,10 +22,10 @@ final class HeadingBlock extends Block
         return [
             Field::text('text')->translatable()->required(),
             Field::select('level')->options([1 => 'H1', 2 => 'H2', 3 => 'H3', 4 => 'H4', 5 => 'H5', 6 => 'H6'])->default(2),
-            Field::select('size')->options(Tokens::keys(Tokens::HEADING_SIZE))->default('3xl'),
+            Field::select('size')->options(Tokens::keys(Tokens::HEADING_SIZE))->default('3xl')->advanced(),
             Field::select('align')->options(Tokens::keys(Tokens::ALIGN))->default('start')->responsive(),
             // No default: the heading inherits the section's text colour.
-            Field::color('color'),
+            Field::color('color')->advanced(),
         ];
     }
 

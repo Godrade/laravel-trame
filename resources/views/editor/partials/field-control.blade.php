@@ -21,7 +21,22 @@
     </button>
 </template>
 
-<template x-if="{{ $f }}.type === 'select' && {{ $f }}.options.length <= 6">
+{{-- Options shown as visual samples (radius, shadow, border, space); the value name stays under each. --}}
+<template x-if="{{ $f }}.type === 'select' && {{ $f }}.preview">
+    <div class="flex flex-wrap gap-1.5">
+        <template x-for="option in {{ $f }}.options" :key="option.value">
+            <button type="button" :aria-pressed="isSelectedOption({{ $f }}, option{{ $c }})" @click="setValue({{ $f }}, option.value{{ $c }})" :title="option.label"
+                    class="flex w-11 flex-col items-center gap-1 rounded-md border border-zinc-200 bg-white pt-2 pb-1 transition hover:border-indigo-300 aria-pressed:border-indigo-500 aria-pressed:bg-indigo-50">
+                <span class="flex size-7 items-center justify-center" aria-hidden="true">
+                    <span :style="sampleStyle({{ $f }}.preview, option.value)"></span>
+                </span>
+                <span class="text-[10px] leading-none text-zinc-500" x-text="option.label"></span>
+            </button>
+        </template>
+    </div>
+</template>
+
+<template x-if="{{ $f }}.type === 'select' && !{{ $f }}.preview && {{ $f }}.options.length <= 6">
     <div class="tr-seg">
         <template x-for="option in {{ $f }}.options" :key="option.value">
             <button type="button" :aria-pressed="isSelectedOption({{ $f }}, option{{ $c }})" @click="setValue({{ $f }}, option.value{{ $c }})" x-text="option.label"></button>
@@ -29,7 +44,7 @@
     </div>
 </template>
 
-<template x-if="{{ $f }}.type === 'select' && {{ $f }}.options.length > 6">
+<template x-if="{{ $f }}.type === 'select' && !{{ $f }}.preview && {{ $f }}.options.length > 6">
     <select class="tr-input" @change="setValue({{ $f }}, {{ $f }}.options[$event.target.selectedIndex].value{{ $c }})">
         <template x-for="option in {{ $f }}.options" :key="option.value">
             <option :value="option.value" :selected="isSelectedOption({{ $f }}, option{{ $c }})" x-text="option.label"></option>
@@ -50,7 +65,7 @@
                     :class="value({{ $f }}{{ $c }}) === color ? 'ring-2 ring-indigo-500 ring-offset-1' : ''"
                     :style="`background: ${swatch(color)}`"></button>
         </template>
-        <label x-show="{{ $f }}.allow_custom" class="relative size-6 cursor-pointer overflow-hidden rounded-full border border-zinc-300"
+        <label x-show="{{ $f }}.allow_custom && !simple" class="relative size-6 cursor-pointer overflow-hidden rounded-full border border-zinc-300"
                :class="String(value({{ $f }}{{ $c }}) ?? '').startsWith('#') ? 'ring-2 ring-indigo-500 ring-offset-1' : ''"
                :style="String(value({{ $f }}{{ $c }}) ?? '').startsWith('#') ? `background: ${value({{ $f }}{{ $c }})}` : 'background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red)'"
                :title="t.custom">

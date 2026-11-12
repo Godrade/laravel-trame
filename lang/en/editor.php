@@ -110,4 +110,8 @@ return [
     'read_only_banner' => 'Demo mode: try everything freely, nothing is saved on the server.',
     'read_only_notice' => 'Demo mode: this action is disabled, your changes stay in your browser.',
     'read_only_changes' => 'Local changes, not saved',
+    'mode_simple' => 'Simple',
+    'mode_advanced' => 'Advanced',
+    'mode_help' => 'Simple mode hides layout and appearance settings.',
+    'per_screen_locked' => 'Set per screen: edit it in advanced mode.',
 ];

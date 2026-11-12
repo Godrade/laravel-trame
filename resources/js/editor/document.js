@@ -456,6 +456,13 @@ export function isResponsiveInherited(container, field, breakpoint) {
     return breakpoint !== 'base' && (value[breakpoint] === undefined || value[breakpoint] === null);
 }
 
+/** True when a responsive field has its own value on md or lg (a per-screen setting). */
+export function hasResponsiveOverrides(container, field) {
+    const value = responsiveObject(isObject(container) ? container[field.name] : undefined);
+
+    return BREAKPOINTS.some((breakpoint) => breakpoint !== 'base' && value[breakpoint] !== undefined && value[breakpoint] !== null);
+}
+
 /** Set (or, with null on md/lg, reset to inherited) a responsive field on one breakpoint. */
 export function writeResponsive(container, field, breakpoint, value) {
     const next = { ...responsiveObject(container[field.name]) };

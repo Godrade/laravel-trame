@@ -45,8 +45,8 @@ final class GalleryBlock extends Block
                 Field::text('caption')->translatable(),
             ])->max(24),
             // Two per row on phones, three from tablets up.
-            Field::select('columns')->options(['1', '2', '3', '4'])->default(['base' => '2', 'md' => '3'])->responsive(),
-            Field::select('ratio')->options(['auto', 'square', 'landscape', 'portrait'])->default('auto'),
+            Field::select('columns')->options(['1', '2', '3', '4'])->default(['base' => '2', 'md' => '3'])->responsive()->advanced(),
+            Field::select('ratio')->options(['auto', 'square', 'landscape', 'portrait'])->default('auto')->advanced(),
         ];
     }
 

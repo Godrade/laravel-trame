@@ -12,6 +12,11 @@ use Illuminate\Support\Facades\Gate;
 
 final class EditorController
 {
+    /** Blocks and column layouts offered in simple mode (see config trame.editor.simple). */
+    public const SIMPLE_BLOCKS = ['heading', 'text', 'image', 'button', 'card', 'quote', 'question'];
+
+    public const SIMPLE_LAYOUTS = ['12', '6-6', '4-4-4', '8-4'];
+
     public function show(Request $request, TrameContent $content, Localizer $localizer): View
     {
         return view('trame::editor.app', [
@@ -26,6 +31,13 @@ final class EditorController
                 'returnUrl' => $this->returnUrl($request),
                 // Read-only viewers (trame.view without trame.edit) can try everything; nothing is sent back.
                 'canEdit' => Gate::allows('trame.edit'),
+                // Simple mode only, unless the host grants "trame.advanced" (then a toggle is shown).
+                'canAdvanced' => Gate::allows('trame.advanced'),
+                // Defaults apply when a published config predates these keys; an empty list disables the filter.
+                'simple' => [
+                    'blocks' => array_values((array) config('trame.editor.simple.blocks', self::SIMPLE_BLOCKS)),
+                    'layouts' => array_values((array) config('trame.editor.simple.layouts', self::SIMPLE_LAYOUTS)),
+                ],
                 'endpoints' => [
                     'definitions' => route('trame.api.definitions'),
                     'content' => route('trame.api.contents.show', $content),

@@ -37,7 +37,7 @@ final class CardBlock extends Block
         return [
             Field::image('image'),
             Field::text('alt')->translatable()->max(200),
-            Field::select('ratio')->options(array_keys(self::RATIOS))->default('landscape'),
+            Field::select('ratio')->options(array_keys(self::RATIOS))->default('landscape')->advanced(),
             Field::text('title')->translatable()->required()->max(120),
             Field::textarea('text')->translatable()->max(600),
             Field::text('link_label')->translatable()->max(60),
